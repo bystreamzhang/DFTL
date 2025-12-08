@@ -1,0 +1,12 @@
+build/*
+dataset/*
+exes/*
+trace.txt
+trace2.txt
+output.txt
+output2.txt
+read_result.txt
+read_result2.txt
+build_dataset2
+build_dataset3
+temp/*
