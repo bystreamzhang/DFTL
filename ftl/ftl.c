@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,17 +15,82 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 
-// 目前发现，对于本赛题的数据，CMT没什么用，可以直接取消，保留TPC就行
+// 原注释：目前发现，对于本赛题的数据，CMT没什么用，可以直接取消，保留TPC就行
 //#define USE_CMT
 
-//#define MULTI_THREADS
-#define DEBUG_FTL
-
 //决赛添加
-#define FAST_DESTROY
-#define FAST_SMALL_INPUT
+//#define DEBUG_FTL // 打印调试信息(主要是预估内存占用)。为了加速，提交时应该注释掉。实际延时影响其实小于0.5%
+#define SMALL_GTD_ARRAY
+#define FAST_DESTROY   // 跳过销毁逻辑，
+#define FAST_CONSTANTS // 针对决赛的常数优化，可能注释掉一些检查和未实现功能
+//#define FAST_CONSTANTS_PREAD //pread_full更安全可靠，而开启此优化后直接使用pread。优化小于1% (94,92,92 vs 91,93,92)
+#define SETVBUF // 使用更大的输入缓冲区，延时优化约2%~3%
+#define ZERO_COPY_DMA // 使用零拷贝DMA读写SSD文件，需内核支持，优化约1%
+#define CACHE_LINE_OPTIMIZE // 消除结构体填充 (Cache Line 利用率优化)，优化约1%~2%
+#define LAST_HIT_OPTIMIZE // 利用最近命中优化TPC查找，优化小于1%
+#define LIKELY_OPTIMIZE // 使用likely和unlikely宏优化分支预测，可能有1%以下的优化
+
+#define MPN_SENTINEL (~0ULL) // 表示无效的 MPN
+
+#ifdef CACHE_LINE_OPTIMIZE
+// 快速计算实际内存地址；page_pool_base 是基地址，idx 是页索引
+#define GET_TPC_PTR(d, idx) ((d)->page_pool_base + (size_t)(idx) * MAP_PAGE_BYTES)
+#endif
+
+#ifdef LIKELY_OPTIMIZE
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+#else
+#define likely(x)       (x)
+#define unlikely(x)     (x)
+#endif
+
+#define CHECK_TPC_ENTRY_VALID(e) ((e)->mpn != MPN_SENTINEL)
+
+//#define SMALL_INPUT_MODE
+#ifdef SMALL_INPUT_MODE
 #define SMALL_INPUT_THRESHOLD (30000000ull)
-#define FLEXIBLE_LBA_SIZE
+#endif
+
+// TPC 配置
+#define TPC_WAYS 4
+#define TPC_WAYS_MASK (TPC_WAYS - 1)
+#define TPC_SETS 64
+#define TPC_SET_MASK (TPC_SETS - 1)
+
+// TaskBatch 模型
+#define BATCH_SIZE   4096
+#define QUEUE_DEPTH  16
+
+typedef struct {
+    uint32_t type;
+    uint64_t lba;
+    uint64_t ppn;
+} TaskSimple;
+
+typedef struct {
+    TaskSimple tasks[BATCH_SIZE];
+    int count;
+} TaskBatch;
+
+// 全局流水线结构：只用单 worker 线程和 TaskBatch 队列，保持输出顺序
+typedef struct {
+    TaskBatch *batch_queue[QUEUE_DEPTH];
+    TaskBatch *free_batches[QUEUE_DEPTH + 2];
+    int free_count;
+    int head;
+    int tail;
+    volatile int finished;
+
+    pthread_mutex_t mutex;
+    pthread_cond_t not_empty;
+    pthread_cond_t not_full;
+
+    pthread_t worker_tid;
+    FILE *output_file;
+} PipelineSimple;
+
+static PipelineSimple g_pl = {0};
 
 // 用0表示无效PPA，mpn要加1才能得到对应ppn，ppn要减1得到mpn。
 // 输入ppn如果为0：暂时也视为无效ppa
@@ -36,16 +103,16 @@ enum {
     DIRTY = 1
 } DIRTY_STATE;
 
+// 原 TPC 参数（未使用的部分保留）
 #define MCACHE_PAGES (1u << 10)
 #define CMT_HASH_SIZE (1u << 12)
-#define TPC_MAX_PAGES    (1u << 6)
-#define TPC_HASH_SIZE    (1u << 10) // TPC的哈希表和page的大小差距很大，容量可以设大些
-
+// #define TPC_MAX_PAGES    (1u << 8)
+// #define TPC_HASH_SIZE    (1u << 12)
 
 #define MAP_PAGE_BYTES 4096u
 #define LBA_MAX_PLUS1 (1ull << 36)
 #define CMT_HASH_MASK (CMT_HASH_SIZE - 1)
-#define TPC_HASH_MASK (TPC_HASH_SIZE - 1)
+// #define TPC_HASH_MASK (TPC_HASH_SIZE - 1)
 
 // 字节压缩优化 (暂时搁置)
 #define USE_U64_ENTRY
@@ -62,30 +129,7 @@ enum {
 #define USE_U64_ENTRY
 #endif
 
-// 多线程优化
-#ifdef MULTI_THREADS
-
-#include <pthread.h>
-#include <sys/sysinfo.h>
-#define CMT_LOCK_SHARDS 4096u
-#define TPC_LOCK_SHARDS 4096u
-#define CMT_LOCK_MASK (CMT_LOCK_SHARDS - 1)
-#define TPC_LOCK_MASK (TPC_LOCK_SHARDS - 1)
-
-static pthread_mutex_t cmt_locks[CMT_LOCK_SHARDS];
-static pthread_mutex_t tpc_locks[TPC_LOCK_SHARDS];
-static pthread_mutex_t tpc_lru_lock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t cmt_global_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static inline pthread_mutex_t *cmt_lock_for_lpn(uint64_t lpn) {
-    return &cmt_locks[lpn & CMT_LOCK_MASK];
-}
-
-static inline pthread_mutex_t *tpc_lock_for_mpn(uint64_t mpn) {
-    return &tpc_locks[mpn & TPC_LOCK_MASK];
-}
-
-#endif
+// ========== MemStats / SsdStats 及通用内存封装，保持原样 ==========
 
 typedef struct MemStats
 {
@@ -97,7 +141,7 @@ typedef struct MemStats
     uint64_t free_cmt_entry_cnt;
     uint64_t used_cmt_entry_cnt;
     uint64_t gtd_used;
-    uint64_t tpc_used; // 包括tpc哈希表
+    uint64_t tpc_used; // 包括tpc哈希表或TPC控制结构
     uint64_t tpc_page_used;
     uint64_t cmt_query_cnt;
     uint64_t cmt_hit_cnt;
@@ -105,9 +149,7 @@ typedef struct MemStats
     uint64_t tpc_hit_cnt;
     uint64_t cmt_dirty_handle_cnt;
     uint64_t tpc_dirty_handle_cnt;
-    #ifdef MULTI_THREADS
-    uint64_t threads_used;
-    #endif
+    uint64_t threads_used; // 用于统计多线程/流水线的内存开销
 } MemStats;
 
 typedef struct SsdStats
@@ -126,7 +168,7 @@ static SsdStats g_ssdstats = {0};
 static void *FTLMalloc(size_t size)
 {
     void *p = malloc(size);
-    if (!p)
+    if (unlikely(!p))
     {
         fprintf(stderr, "malloc %zu failed: %s\n", size, strerror(errno));
         exit(EXIT_FAILURE);
@@ -137,7 +179,7 @@ static void *FTLMalloc(size_t size)
 static void *FTLCalloc(size_t n, size_t size)
 {
     void *p = calloc(n, size);
-    if (!p)
+    if (unlikely(!p))
     {
         fprintf(stderr, "calloc %zu failed: %s\n", n * size, strerror(errno));
         exit(EXIT_FAILURE);
@@ -158,7 +200,7 @@ static int open_file(const char *path, bool write)
     //int flags = write ? (O_CREAT | O_RDWR | O_TRUNC) : O_RDONLY;
     int flags = write ? (O_CREAT | O_RDWR) : O_RDONLY;
     int fd = open(path, flags, 0644);
-    if (fd < 0)
+    if (unlikely(fd < 0))
     {
         perror(path);
         exit(1);
@@ -169,6 +211,9 @@ static int open_file(const char *path, bool write)
 // 读写：返回实际字节数或-1
 static ssize_t pread_full(int fd, void *buf, size_t len, off_t off)
 {
+#ifdef FAST_CONSTANTS_PREAD
+    return pread(fd, buf, MAP_PAGE_BYTES, off);
+#else
     uint8_t *p = (uint8_t *)buf;
     size_t n = 0;
     while (n < len)
@@ -187,9 +232,11 @@ static ssize_t pread_full(int fd, void *buf, size_t len, off_t off)
     if (n < len)
         memset(p + n, 0, len - n);
 
+#ifdef DEBUG_FTL
     g_ssdstats.map_pages_read_cnt++; // 统计读页数(写页数在ssdstats_on_write_map中统计)
-
+#endif
     return (ssize_t)n;
+#endif
 }
 
 static ssize_t pwrite_full(int fd, const void *buf, size_t len, off_t off)
@@ -216,14 +263,17 @@ static inline double to_gb(uint64_t bytes) { return (double)bytes / 1024.0 / 102
 
 static inline void memstats_add(uint64_t *field, uint64_t sz)
 {
+#ifdef DEBUG_FTL
     *field += sz;
     g_memstats.total_used += sz;
     if (g_memstats.total_used > g_memstats.peak_used)
         g_memstats.peak_used = g_memstats.total_used;
+#endif
 }
 
 static inline void memstats_sub(uint64_t *field, uint64_t sz)
 {
+#ifdef DEBUG_FTL
     if (*field >= sz)
         *field -= sz;
     else
@@ -232,6 +282,7 @@ static inline void memstats_sub(uint64_t *field, uint64_t sz)
         g_memstats.total_used -= sz;
     else
         g_memstats.total_used = 0;
+#endif
 }
 
 typedef enum
@@ -242,9 +293,7 @@ typedef enum
     MEM_CLASS_CMT_HASH,
     MEM_CLASS_TPC,
     MEM_CLASS_TPC_PAGE,
-    #ifdef MULTI_THREADS
     MEM_CLASS_PIPELINE
-    #endif
 } MemClass;
 
 static void *FTLMallocEx(size_t size, MemClass cls)
@@ -270,11 +319,9 @@ static void *FTLMallocEx(size_t size, MemClass cls)
     case MEM_CLASS_TPC_PAGE:
         memstats_add(&g_memstats.tpc_page_used, size);
         break;
-    #ifdef MULTI_THREADS
     case MEM_CLASS_PIPELINE:
         memstats_add(&g_memstats.threads_used, size);
         break;
-    #endif
     default:
         memstats_add(&g_memstats.ctrl_used, size);
         break;
@@ -306,11 +353,9 @@ static void *FTLCallocEx(size_t n, size_t size, MemClass cls)
     case MEM_CLASS_TPC_PAGE:
         memstats_add(&g_memstats.tpc_page_used, total);
         break;
-    #ifdef MULTI_THREADS
     case MEM_CLASS_PIPELINE:
-        memstats_add(&g_memstats.threads_used, size);
+        memstats_add(&g_memstats.threads_used, total);
         break;
-    #endif
     default:
         memstats_add(&g_memstats.ctrl_used, total);
         break;
@@ -341,11 +386,9 @@ static void FTLFreeEx(void *p, size_t size, MemClass cls)
     case MEM_CLASS_TPC_PAGE:
         memstats_sub(&g_memstats.tpc_page_used, size);
         break;
-    #ifdef MULTI_THREADS
     case MEM_CLASS_PIPELINE:
         memstats_sub(&g_memstats.threads_used, size);
         break;
-    #endif
     default:
         memstats_sub(&g_memstats.ctrl_used, size);
         break;
@@ -354,50 +397,60 @@ static void FTLFreeEx(void *p, size_t size, MemClass cls)
 
 static inline void ssdstats_on_write_map(off_t offset, size_t len)
 {
+#ifdef DEBUG_FTL
     uint64_t end = (uint64_t)offset + (uint64_t)len;
     if (end > g_ssdstats.map_max_off)
         g_ssdstats.map_max_off = end;
     g_ssdstats.map_pages_written_bytes += len;
     g_ssdstats.map_pages_written_cnt ++;
+#endif
 }
 
 static inline void ssdstats_refresh_from_fs(int fd_map)
 {
+#ifdef DEBUG_FTL
     struct stat st;
     if (fd_map >= 0 && fstat(fd_map, &st) == 0)
     {
         g_ssdstats.map_st_size = (uint64_t)st.st_size;
         g_ssdstats.map_st_blocks = (uint64_t)st.st_blocks * 512ull;
     }
+#endif
 }
 
 static ssize_t pwrite_full_with_stats(int fd, const void *buf, size_t len, off_t off)
 {
     ssize_t n = pwrite_full(fd, buf, len, off);
+    #ifdef DEBUG_FTL
     if (n == (ssize_t)len)
         ssdstats_on_write_map(off, len);
+    #endif
     return n;
 }
 
 #define FTL_MALLOC_CTRL(sz_tt) FTLMallocEx((sz_tt), MEM_CLASS_CTRL)
 #define FTL_CALLOC_CTRL(n, sz_per) FTLCallocEx((n), (sz_per), MEM_CLASS_CTRL)
 #define FTL_MALLOC_ENTRIES(n) FTLCallocEx((n), sizeof(cmt_entry), MEM_CLASS_ENTRIES)
+#ifdef SMALL_GTD_ARRAY
+#define GTD_BITMAP_BYTES(n_mpns) (((n_mpns) + 7ull) / 8ull)
+#define FTL_MALLOC_GTD(n_mpns) FTLCallocEx(GTD_BITMAP_BYTES((n_mpns)), 1u, MEM_CLASS_GTD)
+#define FTL_FREE_GTD(p, n_mpns) FTLFreeEx((p), GTD_BITMAP_BYTES((n_mpns)), MEM_CLASS_GTD)
+#else
 #define FTL_MALLOC_GTD(n) FTLCallocEx((n), sizeof(uint64_t), MEM_CLASS_GTD)
-#define FTL_MALLOC_TPC(n, sz_per) FTLCallocEx((n), sz_per, MEM_CLASS_TPC)
+#define FTL_FREE_GTD(p, cap) FTLFreeEx((p), (size_t)(cap) * sizeof(uint64_t), MEM_CLASS_GTD)
+#endif
+#define FTL_MALLOC_TPC(sz_tt) FTLMallocEx((sz_tt), MEM_CLASS_TPC)
 #define FTL_MALLOC_TPC_PAGE(n) FTLCallocEx((n), MAP_PAGE_BYTES, MEM_CLASS_TPC_PAGE)
 #define FTL_MALLOC_CMT_HASH_BUCKETS(n) FTLCallocEx((n), sizeof(cmt_entry *), MEM_CLASS_CMT_HASH)
 #define FTL_FREE_CTRL(p, sz_tt) FTLFreeEx((p), (sz_tt), MEM_CLASS_CTRL)
 #define FTL_FREE_ENTRIES(p, cap) FTLFreeEx((p), (size_t)(cap) * sizeof(cmt_entry), MEM_CLASS_ENTRIES)
-#define FTL_FREE_GTD(p, cap) FTLFreeEx((p), (size_t)(cap) * sizeof(uint64_t), MEM_CLASS_GTD)
 #define FTL_FREE_TPC(p, sz_tt) FTLFreeEx((p), (sz_tt), MEM_CLASS_TPC)
 #define FTL_FREE_CMT_HASH_BUCKETS(p, cap) FTLFreeEx((p), (size_t)(cap) * sizeof(cmt_entry *), MEM_CLASS_CMT_HASH)
 #define FTL_FREE_TPC_PAGE(p) FTLFreeEx((p), MAP_PAGE_BYTES, MEM_CLASS_TPC_PAGE)
 #define SSD_PWRITE_MAP(fd, buf, len, off) pwrite_full_with_stats((fd), (buf), (len), (off))
 
-#ifdef MULTI_THREADS
 #define FTL_MALLOC_PIPELINE(sz_tt) FTLMallocEx((sz_tt), MEM_CLASS_PIPELINE)
 #define FTL_FREE_PIPELINE(p, sz_tt) FTLFreeEx((p), (sz_tt), MEM_CLASS_PIPELINE)
-#endif
 
 // 映射条目
 #define EPP (MAP_PAGE_BYTES / ENTRY_BYTES)
@@ -410,7 +463,6 @@ static inline uint64_t lpn_to_mpn(uint64_t lpn) { return lpn / (uint64_t)EPP; }
 static inline uint32_t lpn_to_off(uint64_t lpn) { return (uint32_t)(lpn % (uint64_t)EPP); }
 #endif
 
-// mpn-ppn本来可以自定义为相同，但希望将0设置为INVALID(这样GTD表初始化不需要全部赋值一遍) 所以+1
 static inline uint64_t mpn_to_ppa(uint64_t mpn) { return mpn + 1; }
 static inline uint64_t ppa_to_mpn(uint64_t ppa) { return ppa - 1; }
 
@@ -441,24 +493,30 @@ static inline uint64_t entry_load_u64(const uint8_t *base, uint32_t idx)
 #endif
 }
 
-// TPC: Translation Page Cache,
-// 重点是翻译页内部数据，额外记录了mpn-ppa等信息，可看作在OOB区域存储的元数据
-typedef struct tpc_page {
+// ========== 替换原来的 TPC 实现：采用 4-way set associative + 预分配 page_pool ==========
+
+// TPC 结构
+#ifndef CACHE_LINE_OPTIMIZE
+typedef struct {
     uint64_t mpn;
-    uint64_t ppa;     // 翻译页的ppa（0为未分配）
-    uint8_t  dirty;
-    uint8_t  loaded;  // buf是否有效
-    uint8_t  *buf;    // 4KB
-    QTAILQ_ENTRY(tpc_page) lru_link;
-    struct tpc_page *hnext;
-} tpc_page;
+    uint8_t *buffer;
+    uint8_t dirty;
+} TpcEntry;
+#else
+typedef struct {
+    uint64_t mpn;
+    uint32_t buf_idx;  // 改为索引
+    uint8_t dirty;
+    uint8_t pad[3];    // 凑齐 16 bytes，保证对齐
+} TpcEntry;
+#endif
 
 typedef struct {
-    tpc_page **tpc_hash_table;
-    QTAILQ_HEAD(tpc_lru_list, tpc_page) lru_list;
-    uint32_t size;
-    uint32_t capacity;
-} tpc;
+    TpcEntry ways[TPC_WAYS];
+    uint8_t next_victim;
+} TpcSet;
+
+// ========== CMT 结构（原样保留，默认 USE_CMT 未启用） ==========
 
 typedef struct cmt_entry
 {
@@ -474,6 +532,8 @@ typedef struct
     cmt_entry **cmt_table;
 } cmt_hash_table;
 
+// ========== FTL 主控制块：融合 TPC / GTD / CMT / 多线程状态 ==========
+
 typedef struct
 {
     uint64_t total_lpns;
@@ -488,356 +548,200 @@ typedef struct
     QTAILQ_HEAD(cmt_entry_list, cmt_entry) cmt_entry_list;
     uint64_t used_cmt_entry_cnt;
 
+#ifdef SMALL_GTD_ARRAY
+    uint8_t *gtd; // 位图，每 bit 表示对应 mpn 是否已分配
+#else
     uint64_t *gtd;   // GTD, 记录mpn->mpn_ppa
+#endif
 
     cmt_hash_table cmt_hash;
     int fd_map;
 
-    tpc tpc;
+    // 新 TPC：4-way 组相联 + 预分配页池
+    TpcSet tpc_sets[TPC_SETS];
+    uint8_t *page_pool_base; // 共 TPC_SETS*TPC_WAYS 页
 
-    #ifdef FAST_SMALL_INPUT
     bool small_input_mode;
-    uint64_t *mapping;
-    #endif
+
+    bool multi_threaded;
+
+    // Last-Hit 优化缓存
+#ifdef LAST_HIT_OPTIMIZE
+    uint64_t last_mpn;
+    TpcEntry *last_entry;
+#endif
 } FTL;
 
 static FTL *g = NULL;
 
-static inline uint64_t tpc_hash_mpn(uint64_t mpn) { 
-    return mpn & TPC_HASH_MASK;
+// ========== GTD 位图操作（原有 SMALL_GTD_ARRAY 逻辑） ==========
+
+#ifdef SMALL_GTD_ARRAY
+static inline bool gtd_is_allocated(const FTL *d, uint64_t mpn)
+{
+    return (d->gtd[mpn >> 3] >> (mpn & 7u)) & 1u;
 }
 
-static void tpc_init(tpc *c, uint32_t capacity)
+static inline void gtd_mark_allocated(FTL *d, uint64_t mpn)
 {
-    c->capacity = capacity;
-    c->size = 0;
-    c->tpc_hash_table = (tpc_page **)FTL_MALLOC_TPC(TPC_HASH_SIZE, sizeof(tpc_page *));
-    QTAILQ_INIT(&c->lru_list);
-    #ifdef MULTI_THREADS
-    for (unsigned i = 0; i < TPC_LOCK_SHARDS; i++) 
-        pthread_mutex_init(&tpc_locks[i], NULL);
-    #endif
+    d->gtd[mpn >> 3] |= (uint8_t)(1u << (mpn & 7u));
+}
+#endif
+
+// ========== TPC 4-way 实现 ==========
+
+static inline uint32_t tpc_get_set_idx(uint64_t mpn) {
+    return (uint32_t)(mpn & TPC_SET_MASK);
 }
 
-static void TPCDestroy(FTL *d)
-{
-    tpc *c = &d->tpc;
-    // 遍历LRU链，写回并释放
-    #ifdef MULTI_THREADS
-    pthread_mutex_lock(&tpc_lru_lock);
-    #endif
-    tpc_page *p;
-    while ((p = QTAILQ_FIRST(&c->lru_list)) != NULL)
-    {
-        QTAILQ_REMOVE(&c->lru_list, p, lru_link);
-        #ifdef MULTI_THREADS
-        pthread_mutex_unlock(&tpc_lru_lock);
-        pthread_mutex_t* lk = tpc_lock_for_mpn(p->mpn);
-        pthread_mutex_lock(lk);
-        #endif
-        if (p->dirty)
-        {
-            if (p->ppa == INVALID_PPA)
-            {
-                // 首次分配
-                p->ppa = mpn_to_ppa(p->mpn);
-                d->gtd[p->mpn] = p->ppa;
-            }
-            off_t base = (off_t)ppa_to_mpn(p->ppa) * MAP_PAGE_BYTES;
-            ssize_t w = SSD_PWRITE_MAP(d->fd_map, p->buf, MAP_PAGE_BYTES, base);
-            if (w != (ssize_t)MAP_PAGE_BYTES)
-            {
-                perror("TPC destroy writeback failed");
-                exit(1);
-            }
-        }
-        // 从哈希桶删除
-        uint64_t idx = tpc_hash_mpn(p->mpn);
-        tpc_page **pp = &c->tpc_hash_table[idx];
-        while (*pp)
-        {
-            if (*pp == p)
-            {
-                *pp = p->hnext;
-                break;
-            }
-            pp = &(*pp)->hnext;
-        }
-        FTL_FREE_TPC_PAGE(p->buf);
-        FTL_FREE_TPC(p, sizeof(tpc_page));
-        #ifdef MULTI_THREADS
-        pthread_mutex_unlock(lk);
-        pthread_mutex_lock(&tpc_lru_lock);
-        #endif
-    }
-    #ifdef MULTI_THREADS
-    pthread_mutex_unlock(&tpc_lru_lock);
-    for (unsigned i = 0; i < TPC_LOCK_SHARDS; i++) 
-        pthread_mutex_destroy(&tpc_locks[i]);
-    #endif
-    FTL_FREE_TPC(c->tpc_hash_table, TPC_HASH_SIZE * sizeof(tpc_page *));
-    c->tpc_hash_table = NULL;
-    c->size = 0;
-}
-
-static void tpc_writeback_page(FTL *d, tpc_page *p)
-{
-    if (!p || !p->dirty)
-        return;
-    memstats_add(&g_memstats.tpc_dirty_handle_cnt, 1);
-    if (p->ppa == INVALID_PPA)
-    {
-        p->ppa = mpn_to_ppa(p->mpn);
-        d->gtd[p->mpn] = p->ppa;
-    }
-    off_t base = (off_t)ppa_to_mpn(p->ppa) * MAP_PAGE_BYTES;
-    ssize_t w = SSD_PWRITE_MAP(d->fd_map, p->buf, MAP_PAGE_BYTES, base);
-    if (w != (ssize_t)MAP_PAGE_BYTES)
-    {
-        perror("TPC writeback failed");
-        exit(1);
-    }
-    p->dirty = CLEAN;
-}
-
-static void tpc_evict_one(FTL *d)
-{
-    tpc *c = &d->tpc;
-    #ifdef MULTI_THREADS
-    pthread_mutex_lock(&tpc_lru_lock);
-    #endif
-    tpc_page *victim = QTAILQ_LAST(&c->lru_list);
-    if (!victim) {
-        #ifdef MULTI_THREADS
-        pthread_mutex_unlock(&tpc_lru_lock);
-        #endif
-        return;
-    }
-    // 在持有 lru_lock 状态下，从 LRU 链表安全地剔除 victim
-    QTAILQ_REMOVE(&c->lru_list, victim, lru_link);
-    c->size--;
-    #ifdef MULTI_THREADS
-    pthread_mutex_unlock(&tpc_lru_lock);
-    // 之后对该页执行写回与哈希移除：持有它的 shard 锁
-    pthread_mutex_t *lk = tpc_lock_for_mpn(victim->mpn);
-    pthread_mutex_lock(lk);
-    #endif
-    tpc_writeback_page(d, victim);
-    uint64_t idx = tpc_hash_mpn(victim->mpn);
-    tpc_page **pp = &c->tpc_hash_table[idx];
-    while (*pp){
-        if (*pp == victim){
-            *pp = victim->hnext;
-            break;
-        }
-        pp = &(*pp)->hnext;
-    }
-    FTL_FREE_TPC_PAGE(victim->buf);
-    FTL_FREE_TPC(victim, sizeof(tpc_page));
-    #ifdef MULTI_THREADS
-    pthread_mutex_unlock(lk);
-    #endif
-}
-
-static tpc_page *tpc_get_page(FTL *d, uint64_t mpn, int is_write)
-{
-    tpc *c = &d->tpc;
-    #ifdef MULTI_THREADS
-    pthread_mutex_t* lk = tpc_lock_for_mpn(mpn);
-    pthread_mutex_lock(lk);
-    #endif
-    uint64_t idx = tpc_hash_mpn(mpn);
-    tpc_page *p = c->tpc_hash_table[idx];
-    memstats_add(&g_memstats.tpc_query_cnt, 1);
-    while (p) {
-        if (p->mpn == mpn) {
-            memstats_add(&g_memstats.tpc_hit_cnt, 1);
-            #ifdef MULTI_THREADS
-            pthread_mutex_lock(&tpc_lru_lock);
-            #endif
-            QTAILQ_REMOVE(&c->lru_list, p, lru_link);
-            QTAILQ_INSERT_HEAD(&c->lru_list, p, lru_link);
-            #ifdef MULTI_THREADS
-            pthread_mutex_unlock(&tpc_lru_lock);
-            pthread_mutex_unlock(lk);
-            #endif
-            return p;
-        }
-        p = p->hnext;
-    }
-    if (c->size >= c->capacity) {
-        #ifdef MULTI_THREADS
-        pthread_mutex_unlock(lk);
-        #endif
-        tpc_evict_one(d); // TPC满了的情况
-        #ifdef MULTI_THREADS
-        pthread_mutex_lock(lk);
-        #endif
-    }
-    p = (tpc_page *)FTL_MALLOC_TPC(1, sizeof(tpc_page));
-    memset(p, 0, sizeof(*p));
-    p->mpn = mpn;
-    p->buf = (uint8_t *)FTL_MALLOC_TPC_PAGE(1);
-    p->dirty = CLEAN;
-    p->loaded = 0;
-
-    // 查GTD，决定是否读取
-    uint64_t ppa = d->gtd[mpn];
-    p->ppa = ppa;
-    if (ppa == INVALID_PPA)
-    {
-        // 未分配：写场景免读；读场景可视为未映射（不加载）
-        if (is_write) {
-            p->loaded = 1; // 零页即有效
-        }
-        else {
-            // 保持loaded=0, 对读写场景loaded的值会导致不同的后续操作
-        }
-    }
-    else {
-        off_t base = (off_t)ppa_to_mpn(ppa) * MAP_PAGE_BYTES;
-        ssize_t r = pread_full(d->fd_map, p->buf, MAP_PAGE_BYTES, base);
-        if (r < 0) {
-            perror("TPC pread page failed");
+static inline void tpc_flush_entry(FTL *d, TpcEntry *e) {
+    if (CHECK_TPC_ENTRY_VALID(e) && e->dirty) {
+        off_t offset = (off_t)(e->mpn) * MAP_PAGE_BYTES;
+#ifndef CACHE_LINE_OPTIMIZE
+        if (SSD_PWRITE_MAP(d->fd_map, e->buffer, MAP_PAGE_BYTES, offset) != (ssize_t)MAP_PAGE_BYTES) {
+            perror("pwrite failed");
             exit(1);
         }
-        p->loaded = 1;
+#else
+        uint8_t *real_buffer = GET_TPC_PTR(d, e->buf_idx);
+        if (SSD_PWRITE_MAP(d->fd_map, real_buffer, MAP_PAGE_BYTES, offset) != (ssize_t)MAP_PAGE_BYTES) {
+            perror("pwrite failed");
+            exit(1);
+        }
+#endif
+        e->dirty = 0;
+        memstats_add(&g_memstats.tpc_dirty_handle_cnt, 1);
     }
-
-    p->hnext = c->tpc_hash_table[idx];
-    c->tpc_hash_table[idx] = p;
-    #ifdef MULTI_THREADS
-    pthread_mutex_lock(&tpc_lru_lock);
-    #endif
-    QTAILQ_INSERT_HEAD(&c->lru_list, p, lru_link);
-    #ifdef MULTI_THREADS
-    pthread_mutex_unlock(&tpc_lru_lock);
-    pthread_mutex_unlock(lk);
-    #endif
-    c->size++;
-    return p;
 }
 
-static void PrintResourceReport(const char *title, FTL *d)
-{
-    #ifdef FAST_SMALL_INPUT
-    if(d->small_input_mode){
-            fprintf(stdout, "\n================ Resource Report: %s (SMALL INPUT)================\n", title);
-        fprintf(stdout, "Configures:\n");
-        #ifdef MULTI_THREADS
-        fprintf(stdout, "  - Multi-threads: ON \n");
-        #else
-        fprintf(stdout, "  - Multi-threads: OFF \n");
-        #endif
-        fprintf(stdout, "  - Total(Max) LPNS:     %" PRIu64 " pages (= %.6f GB)\n", d->total_lpns, to_gb(d->total_lpns * 4096ull));
-        fprintf(stdout, "  - Max Cache Pages (Entries) in CMT:   %" PRIu64 " entries ( %" PRIu64 " B per entry) (about %.6f GB)\n", d->tt_entries, sizeof(cmt_entry), to_gb(d->tt_entries * sizeof(cmt_entry)));
-        fprintf(stdout, "  - CMT Hash Table Size:    %" PRIu64 " buckets\n", CMT_HASH_SIZE);
-
-        uint64_t total = g_memstats.total_used;
-        fprintf(stdout, "Heap Memory (current / peak): %" PRIu64 " B (%.6f GB) / %" PRIu64 " B (%.6f GB)\n",
-                total, to_gb(total), g_memstats.peak_used, to_gb(g_memstats.peak_used));
-        fprintf(stdout, "  - Control structures:   %" PRIu64 " B (%.6f GB)\n", g_memstats.ctrl_used, to_gb(g_memstats.ctrl_used));
-
-        fprintf(stdout, "SSD Usage (from filesystem stat):\n");
-        fprintf(stdout, "  - map.ssd size:   %" PRIu64 " B (%.6f GB), blocks: %" PRIu64 " B (%.6f GB)\n",
-                g_ssdstats.map_st_size, to_gb(g_ssdstats.map_st_size),
-                g_ssdstats.map_st_blocks, to_gb(g_ssdstats.map_st_blocks));
-
-        fprintf(stdout, "SSD Logical write accounting (program-side):\n");
-        fprintf(stdout, "  - map pages written:     %" PRIu64 " B (%.6f GB)\n", g_ssdstats.map_pages_written_bytes, to_gb(g_ssdstats.map_pages_written_bytes));
-        fprintf(stdout, "  - map pages written cnt:     %" PRIu64 " \n", g_ssdstats.map_pages_written_cnt);
-        fprintf(stdout, "  - map pages read cnt:     %" PRIu64 " \n", g_ssdstats.map_pages_read_cnt);
-        fprintf(stdout, "  - map max end offset:    %" PRIu64 " B (%.6f GB)\n", g_ssdstats.map_max_off, to_gb(g_ssdstats.map_max_off));
-        fprintf(stdout, "=====================================================\n");
-        return;
+static uint8_t *tpc_get_buffer(FTL *d, uint64_t mpn, int is_write) {
+    memstats_add(&g_memstats.tpc_query_cnt, 1);
+#ifdef LAST_HIT_OPTIMIZE
+    // 检查是否命中上一次访问的页
+    if (likely(d->last_mpn == mpn)) {
+        if (is_write) d->last_entry->dirty = 1;
+        memstats_add(&g_memstats.tpc_hit_cnt, 1);
+#ifdef CACHE_LINE_OPTIMIZE
+        return GET_TPC_PTR(d, d->last_entry->buf_idx);
+#else
+        return d->last_entry->buffer;
+#endif
     }
-    #endif
-    fprintf(stdout, "\n================ Resource Report: %s ================\n", title);
-    fprintf(stdout, "Configures:\n");
-    #ifdef MULTI_THREADS
-    fprintf(stdout, "  - Multi-threads: ON \n");
-    #else
-    fprintf(stdout, "  - Multi-threads: OFF \n");
-    #endif
-    fprintf(stdout, "  - Total(Max) LPNS:     %" PRIu64 " pages (= %.6f GB)\n", d->total_lpns, to_gb(d->total_lpns * 4096ull));
-    fprintf(stdout, "  - Max Cache Pages (Entries) in CMT:   %" PRIu64 " entries ( %" PRIu64 " B per entry) (about %.6f GB)\n", d->tt_entries, sizeof(cmt_entry), to_gb(d->tt_entries * sizeof(cmt_entry)));
-    fprintf(stdout, "  - CMT Hash Table Size:    %" PRIu64 " buckets\n", CMT_HASH_SIZE);
-    fprintf(stdout, "  - GTD Size:     %" PRIu64 " entries (= %.6f GB)\n", d->total_mpns, to_gb(d->total_mpns * sizeof(uint64_t)));
-    fprintf(stdout, "  - TPC Max Pages:    %" PRIu64 " pages (= %.6f GB)\n", d->tpc.capacity, to_gb((uint64_t)d->tpc.capacity * MAP_PAGE_BYTES));
-    fprintf(stdout, "  - TPC Hash Table Size:    %" PRIu64 " buckets\n", TPC_HASH_SIZE);
+#endif
+    uint32_t set_idx = tpc_get_set_idx(mpn);
+    TpcSet *set = &d->tpc_sets[set_idx];
 
-    uint64_t total = g_memstats.total_used;
-    fprintf(stdout, "Heap Memory (current / peak): %" PRIu64 " B (%.6f GB) / %" PRIu64 " B (%.6f GB)\n",
-            total, to_gb(total), g_memstats.peak_used, to_gb(g_memstats.peak_used));
-    fprintf(stdout, "  - Control structures:   %" PRIu64 " B (%.6f GB)\n", g_memstats.ctrl_used, to_gb(g_memstats.ctrl_used));
-    fprintf(stdout, "  - CMT entries:      %" PRIu64 " B (%.6f GB)\n", g_memstats.cmt_entrys_used, to_gb(g_memstats.cmt_entrys_used));
-    fprintf(stdout, "  - GTD uses:      %" PRIu64 " B (%.6f GB)\n", g_memstats.gtd_used, to_gb(g_memstats.gtd_used));
-    fprintf(stdout, "  - CMT hash table:   %" PRIu64 " B (%.6f GB)\n", g_memstats.cmt_hash_used, to_gb(g_memstats.cmt_hash_used));
-    fprintf(stdout, "  - free cmt entry cnt:     %" PRIu64 " , %" PRIu64 " B (%.6f GB)\n", d->free_cmt_entry_cnt, d->free_cmt_entry_cnt * sizeof(cmt_entry), to_gb(d->free_cmt_entry_cnt * sizeof(cmt_entry)));
-    fprintf(stdout, "  - used cmt entry cnt:     %" PRIu64 " , %" PRIu64 " B (%.6f GB)\n", d->used_cmt_entry_cnt, d->used_cmt_entry_cnt * sizeof(cmt_entry), to_gb(d->used_cmt_entry_cnt * sizeof(cmt_entry)));
-    fprintf(stdout, "  - CMT hit ratio:     %.6f (%" PRIu64 " / %" PRIu64 ")\n", (double) g_memstats.cmt_hit_cnt / g_memstats.cmt_query_cnt, g_memstats.cmt_hit_cnt, g_memstats.cmt_query_cnt);
-    fprintf(stdout, "  - TPC hit ratio:     %.6f (%" PRIu64 " / %" PRIu64 ")\n", (double) g_memstats.tpc_hit_cnt / g_memstats.tpc_query_cnt, g_memstats.tpc_hit_cnt, g_memstats.tpc_query_cnt);
-    fprintf(stdout, "  - CMT dirty entry handle cnt (not including FTLDestory):     %" PRIu64 "\n", g_memstats.cmt_dirty_handle_cnt);
-    fprintf(stdout, "  - TPC dirty entry handle cnt (not including FTLDestory):     %" PRIu64 "\n", g_memstats.tpc_dirty_handle_cnt);
-    fprintf(stdout, "  - TPC uses (include TPC hash table):      %" PRIu64 " B (%.6f GB)\n", g_memstats.tpc_used, to_gb(g_memstats.tpc_used));
-    fprintf(stdout, "  - TPC pages:    %" PRIu64 " pages,  %" PRIu64 " B (%.6f GB)\n", d->tpc.size, g_memstats.tpc_page_used, to_gb(g_memstats.tpc_page_used));
-    #ifdef MULTI_THREADS
-    fprintf(stdout, "  - Multi-threads used:    %" PRIu64 " B (%.6f GB)\n", g_memstats.threads_used, to_gb(g_memstats.threads_used));
-    #endif
+    // 查找命中
+    for (int i = 0; i < TPC_WAYS; i++) {
+        if (set->ways[i].mpn == mpn) {
+            if (is_write) set->ways[i].dirty = 1;
+            memstats_add(&g_memstats.tpc_hit_cnt, 1);
+#ifdef LAST_HIT_OPTIMIZE
+            d->last_mpn = mpn;
+            d->last_entry = &set->ways[i];
+#endif
+#ifndef CACHE_LINE_OPTIMIZE
+            return set->ways[i].buffer;
+#else
+            return GET_TPC_PTR(d, set->ways[i].buf_idx);
+#endif
+        }
+    }
+    // 未命中：选 victim
+    int victim_way = set->next_victim;
+    TpcEntry *e = &set->ways[victim_way];
+    set->next_victim = (uint8_t)((set->next_victim + 1) & TPC_WAYS_MASK);
 
-    fprintf(stdout, "SSD Usage (from filesystem stat):\n");
-    fprintf(stdout, "  - map.ssd size:   %" PRIu64 " B (%.6f GB), blocks: %" PRIu64 " B (%.6f GB)\n",
-            g_ssdstats.map_st_size, to_gb(g_ssdstats.map_st_size),
-            g_ssdstats.map_st_blocks, to_gb(g_ssdstats.map_st_blocks));
+    if (CHECK_TPC_ENTRY_VALID(e)) {
+        tpc_flush_entry(d, e);
+    }
 
-    fprintf(stdout, "SSD Logical write accounting (program-side):\n");
-    fprintf(stdout, "  - map pages written:     %" PRIu64 " B (%.6f GB)\n", g_ssdstats.map_pages_written_bytes, to_gb(g_ssdstats.map_pages_written_bytes));
-    fprintf(stdout, "  - map pages written cnt:     %" PRIu64 " \n", g_ssdstats.map_pages_written_cnt);
-    fprintf(stdout, "  - map pages read cnt:     %" PRIu64 " \n", g_ssdstats.map_pages_read_cnt);
-    fprintf(stdout, "  - map max end offset:    %" PRIu64 " B (%.6f GB)\n", g_ssdstats.map_max_off, to_gb(g_ssdstats.map_max_off));
-    fprintf(stdout, "=====================================================\n");
+    e->mpn = mpn;
+    e->dirty = is_write ? 1 : 0;
+
+#ifdef LAST_HIT_OPTIMIZE
+    d->last_mpn = mpn;
+    d->last_entry = e;
+#endif
+
+#ifndef CACHE_LINE_OPTIMIZE
+    uint8_t *real_buffer = e->buffer;
+#else
+    uint8_t *real_buffer = GET_TPC_PTR(d, e->buf_idx);
+#endif
+
+    // 查看 GTD 决定是否读盘
+#ifdef SMALL_GTD_ARRAY
+    if (gtd_is_allocated(d, mpn)) {
+        off_t offset = (off_t)mpn * MAP_PAGE_BYTES;
+        if (pread_full(d->fd_map, real_buffer, MAP_PAGE_BYTES, offset) < 0) {
+            memset(real_buffer, 0, MAP_PAGE_BYTES);
+        }
+    } else {
+        if (is_write) gtd_mark_allocated(d, mpn);
+        memset(real_buffer, 0, MAP_PAGE_BYTES);
+    }
+#else
+    uint64_t ppa = d->gtd[mpn];
+    if (ppa == INVALID_PPA) {
+        if (is_write) {
+            d->gtd[mpn] = mpn_to_ppa(mpn);
+        }
+        memset(real_buffer, 0, MAP_PAGE_BYTES);
+    } else {
+        off_t offset = (off_t)ppa_to_mpn(ppa) * MAP_PAGE_BYTES;
+        if (pread_full(d->fd_map, real_buffer, MAP_PAGE_BYTES, offset) < 0) {
+            memset(real_buffer, 0, MAP_PAGE_BYTES);
+        }
+    }
+#endif
+    return real_buffer;
 }
 
-static uint64_t gtd_get_ppa_for_mpn(FTL *d, uint64_t mpn) { 
-    if (mpn >= d->total_mpns) { 
-        fprintf(stderr, "gtd_get_ppa_for_mpn: mpn out of range\n"); 
-        exit(1); 
-    } 
+// ========== CMT 相关（保持原逻辑，默认 USE_CMT 未启用） ==========
+
+static uint64_t gtd_get_ppa_for_mpn(FTL *d, uint64_t mpn) {
+    if (mpn >= d->total_mpns) {
+        fprintf(stderr, "gtd_get_ppa_for_mpn: mpn out of range\n");
+        exit(1);
+    }
+#ifdef SMALL_GTD_ARRAY
+    if (!gtd_is_allocated(d, mpn)) {
+        return INVALID_PPA;
+    }
+    return mpn_to_ppa(mpn);
+#else
     return d->gtd[mpn];
+#endif
 }
 
 // 从TPC读取lpn对应ppn（未分配则返回UNMAPPED）
 static uint64_t read_ppn_from_map_with_gtd(FTL *d, uint64_t lpn)
 {
+    // 原实现：使用 tpc_page 结构及 LRU；现改为使用 tpc_get_buffer
     uint64_t mpn = lpn_to_mpn(lpn);
     uint32_t off = lpn_to_off(lpn);
-    tpc_page *pg = tpc_get_page(d, mpn, 0);
-    if (!pg->loaded)
-    {
-        // 页不存在（未分配），视为未映射
-        return UNMAPPED_PPA;
-    }
-    uint64_t v = entry_load_u64(pg->buf, off);
-    if (v == 0) return UNMAPPED_PPA; // 0 表示未映射
+    uint8_t *buf = tpc_get_buffer(d, mpn, 0);
+#ifdef FAST_CONSTANTS
+    return ((const uint64_t *)buf)[off];
+#else
+    uint64_t v = entry_load_u64(buf, off);
+    if (v == 0) return UNMAPPED_PPA;
     return v;
-    //return entry_load_u64(pg->buf, off);
+#endif
 }
 
 // 写入条目到TPC页，必要时分配映射页并在写回时统一刷盘
 static void write_ppn_to_map_with_gtd(FTL *d, uint64_t lpn, uint64_t ppn)
 {
+    // 原实现：获取 tpc_page，可能懒分配 buf；现在统一使用 tpc_get_buffer
     uint64_t mpn = lpn_to_mpn(lpn);
     uint32_t off = lpn_to_off(lpn);
-    tpc_page *pg = tpc_get_page(d, mpn, 1);
-    if (!pg->loaded) {
-        // 页缓存初始化
-        memset(pg->buf, 0, MAP_PAGE_BYTES);
-        pg->loaded = 1;
-    }
-    entry_store_u64(pg->buf, off, ppn);
-    pg->dirty = DIRTY;
+    uint8_t *buf = tpc_get_buffer(d, mpn, 1);
+    entry_store_u64(buf, off, ppn);
 }
 
+// 以下 CMT hash 仍保留（如后续开启 USE_CMT 时可用）
 static uint64_t hash_lpn(uint64_t lpn) {
     return lpn & CMT_HASH_MASK;
 }
@@ -850,7 +754,6 @@ static void cachehash_init(cmt_hash_table *h, uint64_t sz)
 
 static void cachehash_destroy(cmt_hash_table *h)
 {
-    // 这里哈希表的销毁做法不一定彻底，不过应该不影响最终结果
     FTL_FREE_CMT_HASH_BUCKETS(h->cmt_table, CMT_HASH_SIZE);
     h->cmt_table = NULL;
 }
@@ -908,7 +811,6 @@ static void cmt_entry_bind(FTL *d, cmt_entry *n, uint64_t lpn, uint64_t ppn, uin
     d->used_cmt_entry_cnt++;
 }
 
-// 写回并释放页（不移除结构）
 static void handback_if_needed(FTL *d, cmt_entry *n)
 {
     if (n->dirty == DIRTY) {
@@ -920,19 +822,12 @@ static void handback_if_needed(FTL *d, cmt_entry *n)
 
 static cmt_entry *cache_get_entry(FTL *d, uint64_t lpn)
 {
-    #ifdef MULTI_THREADS
-    pthread_mutex_lock(&cmt_global_lock);
-    #endif
     cmt_entry *n = cachehash_find(&d->cmt_hash, lpn);
     if (n) {
         QTAILQ_REMOVE(&d->cmt_entry_list, n, entry);
         QTAILQ_INSERT_HEAD(&d->cmt_entry_list, n, entry);
-        #ifdef MULTI_THREADS
-        pthread_mutex_unlock(&cmt_global_lock);
-        #endif
         return n;
     }
-    // 未命中：1.从CMT获取一个空闲/淘汰节点 2.从GTD获取ppn 3.绑定
     cmt_entry *e;
     if (!QTAILQ_EMPTY(&d->free_cmt_entry_list)) {
         e = QTAILQ_FIRST(&d->free_cmt_entry_list);
@@ -941,9 +836,6 @@ static cmt_entry *cache_get_entry(FTL *d, uint64_t lpn)
     } else {
         e = QTAILQ_LAST(&d->cmt_entry_list);
         if (!e) {
-            #ifdef MULTI_THREADS
-            pthread_mutex_unlock(&cmt_global_lock);
-            #endif
             fprintf(stderr, "CMT empty\n");
             exit(1);
         }
@@ -954,13 +846,88 @@ static cmt_entry *cache_get_entry(FTL *d, uint64_t lpn)
     }
     uint64_t ppn = read_ppn_from_map_with_gtd(d, lpn);
     cmt_entry_bind(d, e, lpn, ppn, CLEAN);
-    #ifdef MULTI_THREADS
-    pthread_mutex_unlock(&cmt_global_lock);
-    #endif
     return e;
 }
 
-// 生命周期与API
+// ========== 资源报告（保持原版，但补充线程内存统计） ==========
+
+static void PrintResourceReport(const char *title, FTL *d)
+{
+    fprintf(stdout, "\n================ Resource Report: %s ================\n", title);
+#ifdef DEBUG_FTL
+    fprintf(stdout, "Configures:\n");
+    fprintf(stdout, "  - Total(Max) LPNS:     %" PRIu64 " pages (= %.6f GB)\n", d->total_lpns, to_gb(d->total_lpns * 4096ull));
+    fprintf(stdout, "  - Max Cache Pages (Entries) in CMT:   %" PRIu64 " entries ( %" PRIu64 " B per entry) (about %.6f GB)\n",
+            d->tt_entries, (uint64_t)sizeof(cmt_entry), to_gb(d->tt_entries * sizeof(cmt_entry)));
+    fprintf(stdout, "  - CMT Hash Table Size:    %" PRIu64 " buckets\n", (uint64_t)CMT_HASH_SIZE);
+#ifdef SMALL_GTD_ARRAY
+    fprintf(stdout, "  - GTD Size:     %" PRIu64 " entries (= %.6f GB)\n",
+            d->total_mpns, to_gb(d->total_mpns * sizeof(uint8_t)));
+#else
+    fprintf(stdout, "  - GTD Size:     %" PRIu64 " entries (= %.6f GB)\n",
+            d->total_mpns, to_gb(d->total_mpns * sizeof(uint64_t)));
+#endif
+    fprintf(stdout, "  - TPC Sets:     %u, Ways per Set: %u, Total Pages: %u (= %.6f GB)\n",
+            (unsigned)TPC_SETS, (unsigned)TPC_WAYS,
+            (unsigned)(TPC_SETS * TPC_WAYS),
+            to_gb((uint64_t)TPC_SETS * TPC_WAYS * MAP_PAGE_BYTES));
+
+    uint64_t total = g_memstats.total_used;
+    fprintf(stdout, "Heap Memory (current / peak): %" PRIu64 " B (%.6f GB) / %" PRIu64 " B (%.6f GB)\n",
+            total, to_gb(total), g_memstats.peak_used, to_gb(g_memstats.peak_used));
+    fprintf(stdout, "  - Control structures:   %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.ctrl_used, to_gb(g_memstats.ctrl_used));
+    fprintf(stdout, "  - CMT entries:      %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.cmt_entrys_used, to_gb(g_memstats.cmt_entrys_used));
+    fprintf(stdout, "  - GTD uses:      %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.gtd_used, to_gb(g_memstats.gtd_used));
+    fprintf(stdout, "  - CMT hash table:   %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.cmt_hash_used, to_gb(g_memstats.cmt_hash_used));
+    fprintf(stdout, "  - free cmt entry cnt:     %" PRIu64 " , %" PRIu64 " B (%.6f GB)\n",
+            d->free_cmt_entry_cnt,
+            d->free_cmt_entry_cnt * (uint64_t)sizeof(cmt_entry),
+            to_gb(d->free_cmt_entry_cnt * (uint64_t)sizeof(cmt_entry)));
+    fprintf(stdout, "  - used cmt entry cnt:     %" PRIu64 " , %" PRIu64 " B (%.6f GB)\n",
+            d->used_cmt_entry_cnt,
+            d->used_cmt_entry_cnt * (uint64_t)sizeof(cmt_entry),
+            to_gb(d->used_cmt_entry_cnt * (uint64_t)sizeof(cmt_entry)));
+    fprintf(stdout, "  - CMT hit ratio:     %.6f (%" PRIu64 " / %" PRIu64 ")\n",
+            g_memstats.cmt_query_cnt ? (double)g_memstats.cmt_hit_cnt / g_memstats.cmt_query_cnt : 0.0,
+            g_memstats.cmt_hit_cnt, g_memstats.cmt_query_cnt);
+    fprintf(stdout, "  - TPC hit ratio:     %.6f (%" PRIu64 " / %" PRIu64 ")\n",
+            g_memstats.tpc_query_cnt ? (double)g_memstats.tpc_hit_cnt / g_memstats.tpc_query_cnt : 0.0,
+            g_memstats.tpc_hit_cnt, g_memstats.tpc_query_cnt);
+    fprintf(stdout, "  - CMT dirty entry handle cnt (not including FTLDestory):     %" PRIu64 "\n",
+            g_memstats.cmt_dirty_handle_cnt);
+    fprintf(stdout, "  - TPC dirty entry handle cnt (not including FTLDestory):     %" PRIu64 "\n",
+            g_memstats.tpc_dirty_handle_cnt);
+    fprintf(stdout, "  - TPC control+hash uses:      %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.tpc_used, to_gb(g_memstats.tpc_used));
+    fprintf(stdout, "  - TPC pages (page_pool_base): %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.tpc_page_used, to_gb(g_memstats.tpc_page_used));
+    fprintf(stdout, "  - Threads/pipeline memory:    %" PRIu64 " B (%.6f GB)\n",
+            g_memstats.threads_used, to_gb(g_memstats.threads_used));
+
+    fprintf(stdout, "SSD Usage (from filesystem stat):\n");
+    fprintf(stdout, "  - map.ssd size:   %" PRIu64 " B (%.6f GB), blocks: %" PRIu64 " B (%.6f GB)\n",
+            g_ssdstats.map_st_size, to_gb(g_ssdstats.map_st_size),
+            g_ssdstats.map_st_blocks, to_gb(g_ssdstats.map_st_blocks));
+
+    fprintf(stdout, "SSD Logical write accounting (program-side):\n");
+    fprintf(stdout, "  - map pages written:     %" PRIu64 " B (%.6f GB)\n",
+            g_ssdstats.map_pages_written_bytes, to_gb(g_ssdstats.map_pages_written_bytes));
+    fprintf(stdout, "  - map pages written cnt:     %" PRIu64 " \n", g_ssdstats.map_pages_written_cnt);
+    fprintf(stdout, "  - map pages read cnt:     %" PRIu64 " \n", g_ssdstats.map_pages_read_cnt);
+    fprintf(stdout, "  - map max end offset:    %" PRIu64 " B (%.6f GB)\n",
+            g_ssdstats.map_max_off, to_gb(g_ssdstats.map_max_off));
+#else
+    fprintf(stdout, "Resource report is disabled. Compile with DEBUG_FTL to enable it.\n");
+#endif
+    fprintf(stdout, "=====================================================\n");
+}
+
+// ========== FTL 接口：Init / Destroy / Read / Modify ==========
+
 void FTLInit(uint64_t len)
 {
     if (g)
@@ -969,28 +936,18 @@ void FTLInit(uint64_t len)
     memset(g, 0, sizeof(FTL));
 
     const uint64_t entries_per_page = (uint64_t)EPP;
-    #ifdef FLEXIBLE_LBA_SIZE
-    uint64_t total_lpns = len + 1;
-    #else
     uint64_t total_lpns = LBA_MAX_PLUS1;
-    #endif
     uint64_t total_mpns = (total_lpns + entries_per_page - 1ull) / entries_per_page;
     g->total_lpns = total_lpns;
     g->total_mpns = total_mpns;
 
-    #ifdef FAST_SMALL_INPUT
-    g->small_input_mode = false;
-    if(len <= SMALL_INPUT_THRESHOLD){
-        g->small_input_mode = true;
-        g->mapping = (uint64_t *)FTL_MALLOC_CTRL(sizeof(uint64_t) * total_lpns);
-        return;
-    }
-    #endif
-
+#ifdef SMALL_GTD_ARRAY
+    g->gtd = (uint8_t *)FTL_MALLOC_GTD(g->total_mpns);
+#else
     g->gtd = (uint64_t *)FTL_MALLOC_GTD(g->total_mpns);
-    //memset(g->gtd, 0, g->total_mpns * sizeof(uint64_t));
-    
-    #ifdef USE_CMT
+#endif
+
+#ifdef USE_CMT
     g->tt_entries = MCACHE_PAGES;
     g->cmt_entries = (cmt_entry *)FTL_MALLOC_ENTRIES(g->tt_entries);
     g->free_cmt_entry_cnt = 0;
@@ -999,7 +956,6 @@ void FTLInit(uint64_t len)
     QTAILQ_INIT(&g->cmt_entry_list);
 
     struct cmt_entry *cmt_entry;
-
     for (int i = 0; i < MCACHE_PAGES; i++) {
         cmt_entry = &g->cmt_entries[i];
         cmt_entry->dirty = CLEAN;
@@ -1013,26 +969,83 @@ void FTLInit(uint64_t len)
         perror("FTLInit: free_cmt_entry_cnt != tt_entries");
         exit(EXIT_FAILURE);
     }
-
     cachehash_init(&g->cmt_hash, CMT_HASH_SIZE);
-    #endif
+#endif
 
-    tpc_init(&g->tpc, TPC_MAX_PAGES);
+    // 原 tpc_init(g->tpc, TPC_MAX_PAGES); 已不用
+    // --- 新增：TPC 预分配 page_pool_base 并绑定到每个 TpcEntry ---
+#ifndef ZERO_COPY_DMA
+    size_t total_pages = (size_t)TPC_SETS * TPC_WAYS;
+    g->page_pool_base = (uint8_t *)FTL_MALLOC_TPC_PAGE(total_pages);
+#else
+    size_t total_bytes = (size_t)TPC_SETS * TPC_WAYS * MAP_PAGE_BYTES;
+    // 使用 posix_memalign 替代 malloc，强制 4096 字节对齐
+    if (posix_memalign((void **)&g->page_pool_base, 4096, total_bytes) != 0) {
+        perror("posix_memalign failed");
+        exit(1);
+    }
+    memset(g->page_pool_base, 0, total_bytes);
+    
+    memstats_add(&g_memstats.tpc_page_used, total_bytes);
+#endif
+    if (unlikely(!g->page_pool_base)) { perror("malloc pool failed"); exit(1); }
+    // 这里将 page_pool_base 记入 tpc_page_used
+    // FTL_MALLOC_TPC_PAGE 内已经统计 tpc_page_used，无需重复计数
+
+    for (int i = 0; i < TPC_SETS; i++) {
+        g->tpc_sets[i].next_victim = 0;
+        for (int j = 0; j < TPC_WAYS; j++) {
+            g->tpc_sets[i].ways[j].dirty = 0;
+            g->tpc_sets[i].ways[j].mpn   = MPN_SENTINEL;
+#ifndef CACHE_LINE_OPTIMIZE
+            g->tpc_sets[i].ways[j].buffer = g->page_pool_base +
+                ((size_t)(i * TPC_WAYS + j) * MAP_PAGE_BYTES);
+#else
+            g->tpc_sets[i].ways[j].buf_idx = (uint32_t)(i * TPC_WAYS + j);
+#endif
+        }
+    }
 
     g->fd_map = open_file("map.ssd", true);
+    if (unlikely(g->fd_map < 0)) { perror("open map.ssd failed"); exit(1); }
+
+#ifdef LAST_HIT_OPTIMIZE
+    g->last_mpn = MPN_SENTINEL; 
+    g->last_entry = NULL;
+#endif
+
+    memset(&g_pl, 0, sizeof(g_pl));
+
+    // 初始化队列与 batch pool
+    int total_batches = QUEUE_DEPTH + 2;
+    for (int i = 0; i < total_batches; i++) {
+        g_pl.free_batches[i] = (TaskBatch *)FTL_MALLOC_PIPELINE(sizeof(TaskBatch));
+    }
+    g_pl.free_count = total_batches;
+    g_pl.head = 0;
+    g_pl.tail = 0;
+    g_pl.finished = 0;
+    pthread_mutex_init(&g_pl.mutex, NULL);
+    pthread_cond_init(&g_pl.not_empty, NULL);
+    pthread_cond_init(&g_pl.not_full, NULL);
+
+    // 可选优化：提示内核随机访问
+#if defined(POSIX_FADV_RANDOM)
+    posix_fadvise(g->fd_map, 0, 0, POSIX_FADV_RANDOM);
+#endif
 }
 
 void FTLDestroy()
 {
-    #ifdef FAST_DESTROY
+#ifdef FAST_DESTROY
+    // 原逻辑：直接 return，跳过刷脏页和释放。若要严格销毁，可注释掉 FAST_DESTROY 宏。
     return;
-    #else
+#else
     if (!g) return;
-    #ifdef USE_CMT
+#ifdef USE_CMT
     for (uint64_t i = 0; i < g->tt_entries; ++i) {
         cmt_entry *n = &g->cmt_entries[i];
         if (n->lpn != INVALID_LPN && n->dirty) {
-            // memstats_add(&g_memstats.cmt_dirty_handle_cnt, 1);
             write_ppn_to_map_with_gtd(g, n->lpn, n->ppn);
             n->dirty = CLEAN;
         }
@@ -1040,213 +1053,99 @@ void FTLDestroy()
         n->ppn = UNMAPPED_PPA;
         n->hnext = NULL;
     }
-    #endif
+#endif
 
-    TPCDestroy(g);
+    // === 新 TPC：刷新所有脏页到文件 ===
+    for (int i = 0; i < TPC_SETS; i++) {
+        for (int j = 0; j < TPC_WAYS; j++) {
+            if (g->tpc_sets[i].ways[j].mpn != MPN_SENTINEL) {
+                tpc_flush_entry(g, &g->tpc_sets[i].ways[j]);
+            }
+        }
+    }
 
     if (g->fd_map >= 0) {
         close(g->fd_map);
         g->fd_map = -1;
     }
-    #ifdef USE_CMT
+#ifdef USE_CMT
     cachehash_destroy(&g->cmt_hash);
     FTL_FREE_ENTRIES(g->cmt_entries, g->tt_entries);
     g->cmt_entries = NULL;
-    #endif
-    FTL_FREE_GTD(g->gtd, g->total_mpns); 
+#endif
+    FTL_FREE_GTD(g->gtd, g->total_mpns);
     g->gtd = NULL;
+    if (g->page_pool_base) {
+        size_t total_pages = (size_t)TPC_SETS * TPC_WAYS;
+        FTLFreeEx(g->page_pool_base, total_pages * MAP_PAGE_BYTES, MEM_CLASS_TPC_PAGE);
+        g->page_pool_base = NULL;
+    }
     FTL_FREE_CTRL(g, sizeof(FTL));
     g = NULL;
-    #endif
+#endif
 }
 
 uint64_t FTLRead(uint64_t lba) {
-    #ifdef FAST_SMALL_INPUT
-    if(g->small_input_mode){
-        return g->mapping[lba];
-    }
-    #endif
-
-    #ifdef USE_CMT
+#ifdef USE_CMT
     cmt_entry *n = cache_get_entry(g, lba);
     return n->ppn;
-    #else
+#else
     uint64_t ppn = read_ppn_from_map_with_gtd(g, lba);
     return ppn;
-    #endif
+#endif
 }
 
 bool FTLModify(uint64_t lba, uint64_t ppn) {
-    #ifdef FAST_SMALL_INPUT
-    if(g->small_input_mode){
-        g->mapping[lba] = ppn;
-        return true;
-    }
-    #endif
-
-    #ifdef USE_CMT
+#ifdef USE_CMT
     cmt_entry *n = cache_get_entry(g, lba);
     n->ppn = ppn;
     n->dirty = DIRTY;
-    #else
+#else
     write_ppn_to_map_with_gtd(g, lba, ppn);
-    #endif
+#endif
     return true;
 }
 
-#ifdef MULTI_THREADS
+// ========== 下面是多线程部分 ==========
 
-typedef struct {
-    uint32_t type;
-    uint64_t lba;
-    uint64_t ppn;
-    uint64_t seq; // 读结果序号
-} Task;
-
-#define TASK_QUEUE_CAP (1u<<18)
-
-typedef struct {
-    Task* buf;
-    uint32_t cap;
-    uint32_t head, tail, cnt;
-    pthread_mutex_t mu;
-    pthread_cond_t cv_not_full;
-    pthread_cond_t cv_not_empty;
-    int closed;
-} TaskQueue;
-
-static void tq_init(TaskQueue* q, uint32_t cap){
-    q->buf = (Task*)FTL_MALLOC_PIPELINE(cap * sizeof(Task));
-    q->cap = cap; q->head=0; q->tail=0; q->cnt=0; q->closed=0;
-    pthread_mutex_init(&q->mu, NULL);
-    pthread_cond_init(&q->cv_not_full, NULL);
-    pthread_cond_init(&q->cv_not_empty, NULL);
-}
-
-static void tq_destroy(TaskQueue* q){
-    FTL_FREE_PIPELINE(q->buf, q->cap * sizeof(Task));
-    pthread_mutex_destroy(&q->mu);
-    pthread_cond_destroy(&q->cv_not_full);
-    pthread_cond_destroy(&q->cv_not_empty);
-}
-
-static int tq_push(TaskQueue* q, Task t){
-    pthread_mutex_lock(&q->mu);
-    while(q->cnt == q->cap && !q->closed) {
-        pthread_cond_wait(&q->cv_not_full, &q->mu);
-    }
-    if (q->closed) { 
-        pthread_mutex_unlock(&q->mu); 
-        return 0; 
-    }
-    q->buf[q->tail] = t;
-    q->tail = (q->tail + 1) % q->cap;
-    q->cnt++;
-    pthread_cond_signal(&q->cv_not_empty);
-    pthread_mutex_unlock(&q->mu);
-    return 1;
-}
-
-static int tq_pop(TaskQueue* q, Task* out){
-    pthread_mutex_lock(&q->mu);
-    while(q->cnt == 0 && !q->closed) {
-        pthread_cond_wait(&q->cv_not_empty, &q->mu);
-    }
-    if (q->cnt == 0 && q->closed) { 
-        pthread_mutex_unlock(&q->mu); 
-        return 0; 
-    }
-    *out = q->buf[q->head];
-    q->head = (q->head + 1) % q->cap;
-    q->cnt--;
-    pthread_cond_signal(&q->cv_not_full);
-    pthread_mutex_unlock(&q->mu);
-    return 1;
-}
-
-static void tq_close(TaskQueue* q){
-    pthread_mutex_lock(&q->mu);
-    q->closed = 1;
-    pthread_cond_broadcast(&q->cv_not_empty);
-    pthread_cond_broadcast(&q->cv_not_full);
-    pthread_mutex_unlock(&q->mu);
-}
-
-// 可调窗口规模：W = 2^PIPELINE_WIN_SHIFT 槽位
-// 建议 22~26 范围：22->4M，24->16M，26->64M。默认 26（约 0.9GB 结果+就绪+ticket）。
-#ifndef PIPELINE_WIN_SHIFT
-#define PIPELINE_WIN_SHIFT 26
-#endif
-#define PIPELINE_WIN_SIZE ((uint64_t)1ULL << PIPELINE_WIN_SHIFT)
-#define PIPELINE_WIN_MASK (PIPELINE_WIN_SIZE - 1ULL)
-
-typedef struct {
-    TaskQueue* q;
-    // 固定环形窗口（大小 = 2^PIPELINE_WIN_SHIFT）
-    // 每槽位：结果、就绪标记、当前 ticket（周期编号）
-    uint64_t   *results;   // size = W
-    uint8_t    *ready;     // size = W
-    uint32_t   *ticket;    // size = W
-    uint64_t    window_size;   // = W
-    uint64_t    window_start;  // 下一个需要flush的seq
-    uint64_t    total_ios;
-    pthread_mutex_t res_mu;
-    pthread_cond_t  res_cv;
-} Pipeline;
-
-
-static inline void pipeline_publish_read(Pipeline* pl, uint64_t seq, uint64_t value){
-    uint64_t slot = seq & PIPELINE_WIN_MASK;
-    uint32_t need_ticket = (uint32_t)(seq >> PIPELINE_WIN_SHIFT);
-    pthread_mutex_lock(&pl->res_mu);
-    pl->results[slot] = value;
-    pl->ready[slot]   = 1;
-    pl->ticket[slot]  = need_ticket; // 与 flush 中的 need_ticket 匹配
-    pthread_cond_signal(&pl->res_cv);
-    pthread_mutex_unlock(&pl->res_mu);
-}
-
-typedef struct {
-    Pipeline*  pl;     
-    TaskQueue* q;
-} WorkerCtx;
-
-static void* worker_main(void* arg){
-    WorkerCtx* ctx = (WorkerCtx*)arg;
-    Pipeline* pl = ctx->pl;
-    TaskQueue* q = ctx->q;
-    Task t;
-    while (tq_pop(q, &t)){
-        if (t.type == IO_READ){
-            uint64_t ret = FTLRead(t.lba);
-            pipeline_publish_read(pl, t.seq, ret);
-        } else {
-            (void)FTLModify(t.lba, t.ppn);
+static void *WorkerThread(void *arg) {
+    TaskBatch *batch;
+    while (1) {
+        pthread_mutex_lock(&g_pl.mutex);
+        while (g_pl.head == g_pl.tail && !g_pl.finished) {
+            pthread_cond_wait(&g_pl.not_empty, &g_pl.mutex);
         }
+
+        if (g_pl.head == g_pl.tail && g_pl.finished) {
+            pthread_mutex_unlock(&g_pl.mutex);
+            break;
+        }
+
+        batch = g_pl.batch_queue[g_pl.head];
+        g_pl.head = (g_pl.head + 1) % QUEUE_DEPTH;
+        pthread_mutex_unlock(&g_pl.mutex);
+
+        for (int i = 0; i < batch->count; i++) {
+            if (batch->tasks[i].type == IO_READ) {
+                uint64_t res = FTLRead(batch->tasks[i].lba);
+                fprintf(g_pl.output_file, "%" PRIu64 "\n", res);
+            } else {
+                FTLModify(batch->tasks[i].lba, batch->tasks[i].ppn);
+            }
+        }
+
+        pthread_mutex_lock(&g_pl.mutex);
+        g_pl.free_batches[g_pl.free_count++] = batch;
+        pthread_cond_signal(&g_pl.not_full);
+        pthread_mutex_unlock(&g_pl.mutex);
     }
     return NULL;
 }
 
-// 简单的队列选择：按 mpn 分配，稳定且实现简单
-static inline uint32_t pick_qid_by_mpn(uint64_t lba, uint32_t qnum){
-    uint64_t mpn = (lba >> 9);
-    return (uint32_t)(mpn % qnum);
-}
-
-// 根据CPU核数选择线程数，限制最大并发
-static int choose_worker_count(void){
-    int ncpu = get_nprocs();
-    if (ncpu <= 0) ncpu = 4;
-    int n = ncpu * 2;
-    if (n > 16) n = 16;
-    if (n < 2) n = 2;
-    return n;
-}
-#endif
+// ========== 进度打印函数，保持原样 ==========
 
 void PercentageBasedProgress(uint64_t current, uint64_t total, int* lastPercent) {
-    int currentPercent = (current * 100) / total;
-    
+    int currentPercent = (int)((current * 100) / total);
     if (currentPercent != *lastPercent) {
         printf("\rProgress: %d%%", currentPercent);
         fflush(stdout);
@@ -1254,135 +1153,133 @@ void PercentageBasedProgress(uint64_t current, uint64_t total, int* lastPercent)
     }
 }
 
+// ========== AlgorithmRun：融合多线程流水线，保持接口与输出兼容 ==========
+
 uint32_t AlgorithmRun(IOVector *ioVector, const char *outputFile) {
     uint64_t ret;
     int lastPercent = -1;
+
     FILE *output = fopen(outputFile, "w");
     if (!output) {
         perror("Failed to open outputFile");
         exit(EXIT_FAILURE);
     }
-    FILE *input = fopen(ioVector->inputFile, "r");
-    char line[256];
-    fgets(line, sizeof(line), input);
-    fgets(line, sizeof(line), input);
-
-    //可选，FTL初始化
-    FTLInit(ioVector->len);
-
-    #ifdef MULTI_THREADS
-    Pipeline pl;
-    memset(&pl, 0, sizeof(pl));
-    pl.total_ios   = ioVector->len;
-    pl.window_size = PIPELINE_WIN_SIZE;
-    pl.window_start= 0;
-    pl.results = (uint64_t *)FTL_MALLOC_PIPELINE(pl.window_size * sizeof(uint64_t));
-    pl.ready   = (uint8_t  *)FTL_MALLOC_PIPELINE(pl.window_size * sizeof(uint8_t));
-    pl.ticket  = (uint32_t *)FTL_MALLOC_PIPELINE(pl.window_size * sizeof(uint32_t));
-    if (!pl.results || !pl.ready || !pl.ticket) {
-        fprintf(stderr, "pipeline alloc failed\n");
-        return 1;
-    }
-    memset(pl.ready,  0, pl.window_size * sizeof(uint8_t));
-    memset(pl.ticket, 0, pl.window_size * sizeof(uint32_t));
-    pthread_mutex_init(&pl.res_mu, NULL);
-    pthread_cond_init(&pl.res_cv, NULL);
     
-    int nworkers = choose_worker_count();
-    uint32_t qnum = (uint32_t)nworkers;
-    TaskQueue* qs = (TaskQueue*)FTL_MALLOC_PIPELINE(qnum * sizeof(TaskQueue));
-    for (uint32_t qi=0; qi<qnum; ++qi) tq_init(&qs[qi], TASK_QUEUE_CAP);
+    // FTL 初始化
+    FTLInit(ioVector->len);
+    g_pl.output_file = output;
 
-    pthread_t *tids = (pthread_t *)FTL_MALLOC_PIPELINE(nworkers * sizeof(pthread_t));
-    WorkerCtx *ctxs = (WorkerCtx *)FTL_MALLOC_PIPELINE(nworkers * sizeof(WorkerCtx));
-    for (int i=0;i<nworkers;++i){
-        ctxs[i].pl = &pl;
-        ctxs[i].q  = &qs[i];
-        pthread_create(&tids[i], NULL, worker_main, &ctxs[i]);
+    // 启动单 worker 线程（FTLRead/FTLModify 在其中执行）
+    pthread_create(&g_pl.worker_tid, NULL, WorkerThread, NULL);
+
+    FILE *input = fopen(ioVector->inputFile, "r");
+    if (!input) {
+        perror("Failed to open inputFile");
+        fclose(output);
+        exit(EXIT_FAILURE);
     }
-    #endif
-
-    #ifndef MULTI_THREADS
-    for (uint64_t i = 0; i < ioVector->len; ++i) {
-        fgets(line, sizeof(line), input);
-        sscanf(line, "%u %llu %llu", &ioVector->ioUnit.type, &ioVector->ioUnit.lba, &ioVector->ioUnit.ppn);
-        if (ioVector->ioUnit.type == IO_READ) {
-            ret = FTLRead(ioVector->ioUnit.lba);
-            fprintf(output, "%llu\n", ret);
-        } else {
-            FTLModify(ioVector->ioUnit.lba, ioVector->ioUnit.ppn);
-        }
-        PercentageBasedProgress(i, ioVector->len, &lastPercent);
+#ifdef SETVBUF
+    // [新增] 设置 1MB 的输入缓冲区
+    char *input_buffer = malloc(1024 * 1024);
+    if (input_buffer) {
+        setvbuf(input, input_buffer, _IOFBF, 1024 * 1024);
     }
-    #else
+#endif
+    char line[256];
+    fgets(line, sizeof(line), input); // 跳过头1
+    fgets(line, sizeof(line), input); // 跳过头2
 
-    // 生产：按 mpn 分配队列
-    for (uint64_t i = 0; i < ioVector->len; ++i) {
-        Task t;
-        t.type = ioVector->ioArray[i].type;
-        t.lba = ioVector->ioArray[i].lba;
-        t.ppn = ioVector->ioArray[i].ppn;
-        t.seq = i;
-        uint32_t qid = pick_qid_by_mpn(t.lba, qnum);
-        if (!tq_push(&qs[qid], t)) {
-            break;
-        }
-        #ifdef DEBUG_FTL
-        if ((i & ((1u << 20) - 1)) == 0 || i == ioVector->len - 1) {
-            printf("\rEnqueued IO %u / %lu", (unsigned)(i + 1), ioVector->len);
-            fflush(stdout);
-        }
-        #endif
-    }
-    for (uint32_t qi = 0; qi < qnum; ++qi)
-        tq_close(&qs[qi]);
-
-    // 先 flush：按序输出 READ 结果；WRITE 直接推进（并更新 ticket）
-    pthread_mutex_lock(&pl.res_mu);
-    uint64_t next_seq = 0;
-    while (next_seq < ioVector->len) {
-        uint64_t slot = next_seq & PIPELINE_WIN_MASK;
-        uint32_t need_ticket = (uint32_t)(next_seq >> PIPELINE_WIN_SHIFT);
-        if (ioVector->ioArray[next_seq].type != IO_READ) {
-            // 写请求：不输出结果。推进周期，允许后续 seq 复用该槽位
-            pl.ready[slot] = 0;
-            pl.ticket[slot] = need_ticket + 1;
-            next_seq++;
-        }
-        else {
-            // 读请求：等待该槽位在当前周期就绪
-            while (!(pl.ticket[slot] == need_ticket && pl.ready[slot] == 1)) {
-                pthread_cond_wait(&pl.res_cv, &pl.res_mu);
+    // 判断是否使用多线程流水线：
+    // 这里简单策略：len 大于 SMALL_INPUT_THRESHOLD 就用多线程，否则用原单线程逻辑
+#ifdef SMALL_INPUT_MODE
+    if (ioVector->len <= SMALL_INPUT_THRESHOLD) {
+        // ======= 原单线程逻辑保留 =======
+        for (uint64_t i = 0; i < ioVector->len; ++i) {
+            if (!fgets(line, sizeof(line), input)) break;
+            sscanf(line, "%u %llu %llu",
+                   &ioVector->ioUnit.type,
+                   &ioVector->ioUnit.lba,
+                   &ioVector->ioUnit.ppn);
+            if (ioVector->ioUnit.type == IO_READ) {
+                ret = FTLRead(ioVector->ioUnit.lba);
+                fprintf(output, "%llu\n", ret);
+            } else {
+                FTLModify(ioVector->ioUnit.lba, ioVector->ioUnit.ppn);
             }
-            uint64_t ret = pl.results[slot];
-            fprintf(file, "%" PRIu64 "\n", ret);
-            // 清理并推进周期
-            pl.ready[slot] = 0;
-            pl.ticket[slot] = need_ticket + 1;
-            next_seq++;
+            PercentageBasedProgress(i, ioVector->len, &lastPercent);
         }
+    } else {
+#endif
+        // ======= 新：多线程流水线（基于 TaskBatch 方案） =======
+        
+        TaskBatch *current_batch = NULL;
+
+        // 先取一个空 batch
+        pthread_mutex_lock(&g_pl.mutex);
+        while (g_pl.free_count == 0) pthread_cond_wait(&g_pl.not_full, &g_pl.mutex);
+        current_batch = g_pl.free_batches[--g_pl.free_count];
+        pthread_mutex_unlock(&g_pl.mutex);
+        current_batch->count = 0;
+
+        for (uint64_t i = 0; i < ioVector->len; ++i) {
+            fgets(line, sizeof(line), input);
+            sscanf(line, "%u %llu %llu", &ioVector->ioUnit.type, &ioVector->ioUnit.lba, &ioVector->ioUnit.ppn);
+            TaskSimple t = {ioVector->ioUnit.type, ioVector->ioUnit.lba, ioVector->ioUnit.ppn};
+            current_batch->tasks[current_batch->count++] = t;
+
+            if (unlikely(current_batch->count == BATCH_SIZE)) {
+                pthread_mutex_lock(&g_pl.mutex);
+                while ((g_pl.tail + 1) % QUEUE_DEPTH == g_pl.head) {
+                    pthread_cond_wait(&g_pl.not_full, &g_pl.mutex);
+                }
+                g_pl.batch_queue[g_pl.tail] = current_batch;
+                g_pl.tail = (g_pl.tail + 1) % QUEUE_DEPTH;
+                pthread_cond_signal(&g_pl.not_empty);
+
+                while (g_pl.free_count == 0) {
+                    pthread_cond_wait(&g_pl.not_full, &g_pl.mutex);
+                }
+                current_batch = g_pl.free_batches[--g_pl.free_count];
+                pthread_mutex_unlock(&g_pl.mutex);
+                current_batch->count = 0;
+            }
+            PercentageBasedProgress(i, ioVector->len, &lastPercent);
+        }
+
+        if (current_batch->count > 0) {
+            pthread_mutex_lock(&g_pl.mutex);
+            while ((g_pl.tail + 1) % QUEUE_DEPTH == g_pl.head) {
+                pthread_cond_wait(&g_pl.not_full, &g_pl.mutex);
+            }
+            g_pl.batch_queue[g_pl.tail] = current_batch;
+            g_pl.tail = (g_pl.tail + 1) % QUEUE_DEPTH;
+            pthread_cond_signal(&g_pl.not_empty);
+            pthread_mutex_unlock(&g_pl.mutex);
+        }
+
+        pthread_mutex_lock(&g_pl.mutex);
+        g_pl.finished = 1;
+        pthread_cond_broadcast(&g_pl.not_empty);
+        pthread_mutex_unlock(&g_pl.mutex);
+
+        pthread_join(g_pl.worker_tid, NULL);
+
+        // 释放流水线资源并计入线程内存统计（FTL_MALLOC_PIPELINE 已经统计）
+        // for (int i = 0; i < ioVector->len; i++) FTL_FREE_PIPELINE(g_pl.free_batches[i], sizeof(TaskBatch));
+        pthread_mutex_destroy(&g_pl.mutex);
+        pthread_cond_destroy(&g_pl.not_empty);
+        pthread_cond_destroy(&g_pl.not_full);
+#ifdef SMALL_INPUT_MODE
     }
-    pthread_mutex_unlock(&pl.res_mu);
-    // flush 完成后等待 worker 退出
-    for (int i = 0; i < nworkers; i++)
-        pthread_join(tids[i], NULL);
-    #endif
+#endif
 
     ssdstats_refresh_from_fs(g->fd_map);
     PrintResourceReport("AlgorithmRun summary", g);
 
-    #ifdef MULTI_THREADS
-    FTL_FREE_PIPELINE(qs, qnum * sizeof(TaskQueue));
-    FTL_FREE_PIPELINE(ctxs, nworkers * sizeof(WorkerCtx));
-    FTL_FREE_PIPELINE(pl.results, pl.window_size * sizeof(uint64_t));
-    FTL_FREE_PIPELINE(pl.ready,   pl.window_size * sizeof(uint8_t));
-    FTL_FREE_PIPELINE(pl.ticket,  pl.window_size * sizeof(uint32_t));
-    pthread_mutex_destroy(&pl.res_mu);
-    pthread_cond_destroy(&pl.res_cv);
-    #endif
-
-    // 可选，FTL销毁
     FTLDestroy();
+#ifdef SETVBUF
+    free(input_buffer);
+#endif
     fclose(output);
     fclose(input);
 

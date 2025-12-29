@@ -19,7 +19,17 @@ include_directories(${HEADER_DIRS})
 
 add_executable(project_hw  ${SOURCES})
 
-target_compile_options(project_hw PRIVATE -g -std=c99)
+target_compile_options(project_hw PRIVATE 
+    -g
+    -std=c99
+    # 下面的几行，提交时注释掉
+    # -Wall
+    # -Wextra
+    # -Wpedantic
+    # 开启这一行会把所有警告当错误（本地调试建议开，比赛不确定就先关）
+    # -Werror
+    # -fsanitize=address,undefined
+)
 
 target_compile_definitions(project_hw PRIVATE _GNU_SOURCE)
 

@@ -5,11 +5,15 @@
 #include <stdbool.h>
 #include "../public.h"
 
+#ifndef typeof
+#define typeof __typeof__
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void FTLInit();
+void FTLInit(uint64_t len);
 void FTLDestroy();
 uint64_t FTLRead(uint64_t lba);
 bool FTLModify(uint64_t lba, uint64_t ppn);

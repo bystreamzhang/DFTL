@@ -1,7 +1,7 @@
 /*
 构造数据：
-gcc -O2 -march=native -std=c11 -Wall -Wextra -o build_dataset2 build_dataset2.c
-./build_dataset2
+gcc -O2 -march=native -std=c11 -Wall -Wextra -o build_dataset2-seq build_dataset2-seq.c
+./build_dataset2-seq
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,8 +115,8 @@ int main()
     for (uint64_t i = 0; i < BUCKET_COUNT; i++)
         buckets[i] = -1;
 
-    FILE *trace = fopen("trace.txt", "w");
-    FILE *readout = fopen("read_result.txt", "w");
+    FILE *trace = fopen("trace-seq.txt", "w");
+    FILE *readout = fopen("read_result-seq.txt", "w");
     if (!trace || !readout)
     {
         fprintf(stderr, "[Error] cannot open output files\n");
@@ -163,7 +163,8 @@ int main()
                     (unsigned long long)IO_NUM_RANDOM,
                     node_top);
         uint64_t op = rand_below(&seed, 2);
-        uint64_t lpn = rand_below(&seed, IO_NUM_WRITES);
+        //uint64_t lpn = rand_below(&seed, IO_NUM_WRITES);
+        uint64_t lpn = i;
         uint64_t ppn = rand_below(&seed, PPN_MAX);
 
         if (op == 1)

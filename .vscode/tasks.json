@@ -6,6 +6,18 @@
 	"tasks": [
         {
             "type": "shell",
+            "label": "clean-data",
+            "command": "rm",
+            "args": [
+                "-f",
+                "map.ssd",
+                "../output.txt",
+                "../output2.txt" 
+            ],
+            "detail": "删除上次运行产生的 SSD 模拟文件和输出文件，确保环境纯净"
+        },
+        {
+            "type": "shell",
             "label": "make clean",
             "command": "make clean",
             "args": []
@@ -30,6 +42,7 @@
             "label": "build-task",
             "dependsOrder": "sequence",
             "dependsOn": [
+                "clean-data",
                 "make clean",
                 "cmake",
                 "make"
