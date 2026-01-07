@@ -1,0 +1,17 @@
+1. 总体演进 (Round1 -> Final)
+Hard 延时: 221.938s -> 186.884s (提升了 16%)
+MaxRSS: 136044KB -> 3872KB(主要是GTD内存占用优化(133644KB->1648KB)，也有TPC的优化但final版本并不彻底(2256->1080))
+这里的MaxRSS均使用pmap测试中不考虑libc-2.31.so的部分，因为和评测结果更接近（评测结果中，Hard数据内存开销在4082~4109，medium在3920~3966，easy在3750~3766KB），展示时更使评委信服
+2. 核心架构收益 (Pipeline)
+NoPipeline Hard延时: 215.494s
+Final Hard延时: 186.884s（提升13.3%）
+火焰图特征:如我提供的火焰图和trace.json图所示。
+3. 内存权衡 (LowMem vs Final)
+Hard 延时差距: 191.953s -> 186.884s (提升 2.64%)
+Random 延时差距: 712.809s -> 687.645s （提升3.53%）
+pmap 内存差距: 1872KB vs 3872KB （增加约2MB，其中1MB来自Setvbuf，1MB来自TPC_PAGES）
+（其实我仔细一想，可能这里的延迟增加主要是由于少了setvbuf，和TPC可能没有太大关系）
+4. 细节优化 (Setvbuf / SmallOpt)
+Hard数据 和final相比：
+Setvbuf 收益: 192.307s -> 186.884s （提升2.84%）
+SmallOpt 收益: 192.588s ->186.884s （提升2.96%）

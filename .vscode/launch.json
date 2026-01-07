@@ -9,6 +9,7 @@
             "args": ["-i", "../trace.txt", "-o", "../output.txt", "-v", "../read_result.txt"],
             //"args": ["-i", "../trace2.txt", "-o", "../output2.txt", "-v", "../read_result2.txt"],
             //"args": ["-i", "../trace-seq.txt", "-o", "../output-seq.txt", "-v", "../read_result-seq.txt"],
+            //"args": ["-i", "../trace-a-lot-random.txt", "-o", "../output-a-lot-random.txt", "-v", "../read_result-a-lot-random.txt"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

@@ -1,0 +1,68 @@
+Welcome to HW project.
+The input file path is: ./trace.txt
+The output file path is: ./output.txt
+The validate file path is: ./read_result.txt
+io count = 251000000
+inputFile = ./trace.txt
+Start AlgorithmRun
+Progress: 99%
+================ Resource Report: AlgorithmRun summary ================
+Configures:
+  - Total(Max) LPNS:     68719476736 pages (= 262144.000000 GB)
+  - Max Cache Pages (Entries) in CMT:   0 entries ( 48 B per entry) (about 0.000000 GB)
+  - CMT Hash Table Size:    4096 buckets
+  - GTD Size:     134217728 entries (= 0.125000 GB)
+  - TPC Sets:     64, Ways per Set: 4, Total Pages: 256 (= 0.000977 GB)
+Heap Memory (current / peak): 522148501 B (0.486289 GB) / 522148501 B (0.486289 GB)
+  - Control structures and setvbuf(1MB):   1053320 B (0.000981 GB)
+  - CMT entries:      0 B (0.000000 GB)
+  - GTD uses:      16777216 B (0.015625 GB)
+  - CMT hash table:   0 B (0.000000 GB)
+  - free cmt entry cnt:     0 , 0 B (0.000000 GB)
+  - used cmt entry cnt:     0 , 0 B (0.000000 GB)
+  - CMT hit ratio:     0.000000 (0 / 0)
+  - TPC hit ratio:     0.994073 (249512237 / 251000000)
+  - CMT dirty entry handle cnt (not including FTLDestory):     0
+  - TPC dirty entry handle cnt (not including FTLDestory):     987536
+  - TPC control+hash uses:      0 B (0.000000 GB)
+  - TPC pages (page_pool_base): 1048576 B (0.000977 GB)
+  - Threads/pipeline memory:    1769616 B (0.001648 GB)
+SSD Usage (from filesystem stat):
+  - map.ssd size:   2000003072 B (1.862648 GB), blocks: 2000007168 B (1.862652 GB)
+SSD Logical write accounting (program-side):
+  - map pages written:     4044947456 B (3.767151 GB)
+  - map pages written cnt:     987536 
+  - map pages read cnt:     999481 
+  - map max end offset:    2000003072 B (1.862648 GB)
+=====================================================
+
+Key Metrics:
+        ioCount:                         500469
+        algorithmRunningDuration:        95691.749 (ms)
+        accuracy:                        100.00
+        memoryUse:                       0 (KB)
+
+指标写入文件 ./metrics.txt
+        Command being timed: "./build/project_hw -i ./trace.txt -o ./output.txt -v ./read_result.txt"
+        User time (seconds): 110.59
+        System time (seconds): 17.39
+        Percent of CPU this job got: 133%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:35.83
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 5688
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 9314
+        Voluntary context switches: 61213
+        Involuntary context switches: 486
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 6177728
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0

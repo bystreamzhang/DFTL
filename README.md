@@ -46,3 +46,21 @@ Key Metrics:
 
 指标写入文件 ./metrics.txt
 ```
+
+## 性能测试
+
+延时：使用火焰图，见 profile.sh
+
+内存：
+
+分析Peak Memory(应用层视角)使用valgrind。
+```
+# --tool=massif: 指定使用堆分析工具
+# --time-unit=ms: 时间轴单位用毫秒（默认是指令数，毫秒更直观）
+# --detailed-freq=1: 尽可能详细地记录快照
+valgrind --tool=massif --time-unit=ms --detailed-freq=1 \
+    ./build/project_hw -i ./trace.txt -o ./output.txt -v ./read_result.txt
+```
+分析Max RSS使用 /usr/bin/time -v ./build/project_hw ...
+
+更具体的可以用pmap：`pmap -x <pid> | sort -k 3 -n -r`

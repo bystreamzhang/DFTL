@@ -1,0 +1,1528 @@
+--------------------------------------------------------------------------------
+Command:            ./build/project_hw -i ./trace.txt -o ./output.txt -v ./read_result.txt
+Massif arguments:   --time-unit=ms --detailed-freq=1
+ms_print arguments: ./massif.out.2003834
+--------------------------------------------------------------------------------
+
+
+    MB
+19.70^                                                                     @@#
+     |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+     |@                                                                    @ #
+   0 +----------------------------------------------------------------------->s
+     0                                                                   698.3
+
+Number of snapshots: 62
+ Detailed snapshots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35 (peak), 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61]
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  0              0                0                0             0            0
+00.00% (0B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  1            407            1,032            1,024             8            0
+99.22% (1,024B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->99.22% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+  ->99.22% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+    ->99.22% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+      ->99.22% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+        ->99.22% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+          ->99.22% (1,024B) 0x49054F7: puts (ioputs.c:40)
+            ->99.22% (1,024B) 0x10AE16: main (main.c:152)
+              
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  2            413            1,088            1,064            24            0
+97.79% (1,064B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->94.12% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->94.12% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->94.12% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|     ->94.12% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|       ->94.12% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|         ->94.12% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|           ->94.12% (1,024B) 0x10AE16: main (main.c:152)
+|             
+->03.68% (40B) 0x10AFA9: main (main.c:193)
+  
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  3            413            1,576            1,536            40            0
+97.46% (1,536B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->64.97% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->64.97% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->64.97% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|     ->64.97% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|       ->64.97% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|         ->64.97% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|           ->64.97% (1,024B) 0x10AE16: main (main.c:152)
+|             
+->29.95% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->29.95% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->29.95% (472B) 0x10A68D: ParseFile (main.c:19)
+|     ->29.95% (472B) 0x10AFC0: main (main.c:194)
+|       
+->02.54% (40B) 0x10AFA9: main (main.c:193)
+  
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  4            415            5,680            5,632            48            0
+99.15% (5,632B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->90.14% (5,120B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->90.14% (5,120B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->72.11% (4,096B) 0x4911CA3: _IO_file_underflow@@GLIBC_2.2.5 (fileops.c:486)
+|   | ->72.11% (4,096B) 0x4912F85: _IO_default_uflow (genops.c:362)
+|   |   ->72.11% (4,096B) 0x490486B: _IO_getline_info (iogetline.c:60)
+|   |     ->72.11% (4,096B) 0x49036C9: fgets (iofgets.c:53)
+|   |       ->72.11% (4,096B) 0x10A6DD: ParseFile (main.c:28)
+|   |         ->72.11% (4,096B) 0x10AFC0: main (main.c:194)
+|   |           
+|   ->18.03% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|     ->18.03% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|       ->18.03% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|         ->18.03% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|           ->18.03% (1,024B) 0x10AE16: main (main.c:152)
+|             
+->08.31% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->08.31% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->08.31% (472B) 0x10A68D: ParseFile (main.c:19)
+|     ->08.31% (472B) 0x10AFC0: main (main.c:194)
+|       
+->00.70% (40B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  5            421            5,704            5,644            60            0
+98.95% (5,644B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->89.76% (5,120B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->89.76% (5,120B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->71.81% (4,096B) 0x4911CA3: _IO_file_underflow@@GLIBC_2.2.5 (fileops.c:486)
+|   | ->71.81% (4,096B) 0x4912F85: _IO_default_uflow (genops.c:362)
+|   |   ->71.81% (4,096B) 0x490486B: _IO_getline_info (iogetline.c:60)
+|   |     ->71.81% (4,096B) 0x49036C9: fgets (iofgets.c:53)
+|   |       ->71.81% (4,096B) 0x10A6DD: ParseFile (main.c:28)
+|   |         ->71.81% (4,096B) 0x10AFC0: main (main.c:194)
+|   |           
+|   ->17.95% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|     ->17.95% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|       ->17.95% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|         ->17.95% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|           ->17.95% (1,024B) 0x10AE16: main (main.c:152)
+|             
+->08.27% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->08.27% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->08.27% (472B) 0x10A68D: ParseFile (main.c:19)
+|     ->08.27% (472B) 0x10AFC0: main (main.c:194)
+|       
+->00.91% (52B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  6            422            5,704            5,644            60            0
+98.95% (5,644B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->89.76% (5,120B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->89.76% (5,120B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->71.81% (4,096B) 0x4911CA3: _IO_file_underflow@@GLIBC_2.2.5 (fileops.c:486)
+|   | ->71.81% (4,096B) 0x4912F85: _IO_default_uflow (genops.c:362)
+|   |   ->71.81% (4,096B) 0x490486B: _IO_getline_info (iogetline.c:60)
+|   |     ->71.81% (4,096B) 0x49036C9: fgets (iofgets.c:53)
+|   |       ->71.81% (4,096B) 0x10A6DD: ParseFile (main.c:28)
+|   |         ->71.81% (4,096B) 0x10AFC0: main (main.c:194)
+|   |           
+|   ->17.95% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|     ->17.95% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|       ->17.95% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|         ->17.95% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|           ->17.95% (1,024B) 0x10AE16: main (main.c:152)
+|             
+->08.27% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->08.27% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->08.27% (472B) 0x10A68D: ParseFile (main.c:19)
+|     ->08.27% (472B) 0x10AFC0: main (main.c:194)
+|       
+->00.91% (52B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  7            422            1,600            1,548            52            0
+96.75% (1,548B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->64.00% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->64.00% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->64.00% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|   | ->64.00% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|   |   ->64.00% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|   |     ->64.00% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|   |       ->64.00% (1,024B) 0x10AE16: main (main.c:152)
+|   |         
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->29.50% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->29.50% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->29.50% (472B) 0x10A68D: ParseFile (main.c:19)
+|     ->29.50% (472B) 0x10AFC0: main (main.c:194)
+|       
+->02.50% (40B) 0x10AFA9: main (main.c:193)
+| 
+->00.75% (12B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  8            422            1,112            1,076            36            0
+96.76% (1,076B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->92.09% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->92.09% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->92.09% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|   | ->92.09% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|   |   ->92.09% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|   |     ->92.09% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|   |       ->92.09% (1,024B) 0x10AE16: main (main.c:152)
+|   |         
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->03.60% (40B) 0x10AFA9: main (main.c:193)
+| 
+->01.08% (12B) 0x492038E: strdup (strdup.c:42)
+| ->01.08% (12B) 0x10A774: ParseFile (main.c:35)
+|   ->01.08% (12B) 0x10AFC0: main (main.c:194)
+|     
+->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  9            423            1,600            1,548            52            0
+96.75% (1,548B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->64.00% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->64.00% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->64.00% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|   | ->64.00% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|   |   ->64.00% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|   |     ->64.00% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|   |       ->64.00% (1,024B) 0x10AE16: main (main.c:152)
+|   |         
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->29.50% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->29.50% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->29.50% (472B) 0x10D50D: AlgorithmRun (ftl.c:1195)
+|   | ->29.50% (472B) 0x10B01B: main (main.c:206)
+|   |   
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->02.50% (40B) 0x10AFA9: main (main.c:193)
+| 
+->00.75% (12B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 10            424            6,360            6,292            68            0
+98.93% (6,292B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->74.59% (4,744B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->74.59% (4,744B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->74.59% (4,744B) 0x10CE06: FTLInit (ftl.c:962)
+|     ->74.59% (4,744B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->74.59% (4,744B) 0x10B01B: main (main.c:206)
+|         
+->16.10% (1,024B) 0x4902D03: _IO_file_doallocate (filedoalloc.c:101)
+| ->16.10% (1,024B) 0x4912ECF: _IO_doallocbuf (genops.c:347)
+|   ->16.10% (1,024B) 0x4911F2F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+|   | ->16.10% (1,024B) 0x49106B4: _IO_new_file_xsputn (fileops.c:1244)
+|   |   ->16.10% (1,024B) 0x49106B4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+|   |     ->16.10% (1,024B) 0x49054F7: puts (ioputs.c:40)
+|   |       ->16.10% (1,024B) 0x10AE16: main (main.c:152)
+|   |         
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->07.42% (472B) 0x490392D: __fopen_internal (iofopen.c:65)
+| ->07.42% (472B) 0x490392D: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+|   ->07.42% (472B) 0x10D50D: AlgorithmRun (ftl.c:1195)
+|   | ->07.42% (472B) 0x10B01B: main (main.c:206)
+|   |   
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.82% (52B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 11            435       16,787,616       16,783,508         4,108            0
+99.98% (16,783,508B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->99.94% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->99.94% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->99.94% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->99.94% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->99.94% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->00.04% (6,292B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 12            435       17,838,696       17,832,084         6,612            0
+99.96% (17,832,084B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->94.05% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->94.05% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->94.05% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->94.05% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->94.05% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.88% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.88% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.88% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.04% (6,292B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 13            438       17,937,024       17,930,396         6,628            0
+99.96% (17,930,396B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->93.53% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->93.53% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->93.53% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->93.53% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->93.53% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.85% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.85% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.85% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.58% (104,604B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 14            439       18,035,352       18,028,708         6,644            0
+99.96% (18,028,708B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->93.02% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->93.02% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->93.02% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->93.02% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->93.02% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.81% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.81% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.81% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->01.12% (201,368B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->01.12% (201,368B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->01.09% (196,624B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->01.09% (196,624B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->01.09% (196,624B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 15            439       18,133,680       18,127,020         6,660            0
+99.96% (18,127,020B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->92.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->92.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->92.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->92.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->92.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.78% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.78% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.78% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->01.65% (299,680B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->01.65% (299,680B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->01.63% (294,936B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->01.63% (294,936B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->01.63% (294,936B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 16            439       18,232,008       18,225,332         6,676            0
+99.96% (18,225,332B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->92.02% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->92.02% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->92.02% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->92.02% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->92.02% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.75% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.75% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.75% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->02.18% (397,992B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->02.18% (397,992B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->02.16% (393,248B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->02.16% (393,248B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->02.16% (393,248B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 17            439       18,330,336       18,323,644         6,692            0
+99.96% (18,323,644B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->91.53% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->91.53% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->91.53% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->91.53% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->91.53% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.72% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.72% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.72% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->02.71% (496,304B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->02.71% (496,304B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->02.68% (491,560B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->02.68% (491,560B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->02.68% (491,560B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 18            439       18,428,664       18,421,956         6,708            0
+99.96% (18,421,956B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->91.04% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->91.04% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->91.04% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->91.04% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->91.04% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.69% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.69% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.69% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->03.23% (594,616B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->03.23% (594,616B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->03.20% (589,872B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->03.20% (589,872B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->03.20% (589,872B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 19            439       18,526,992       18,520,268         6,724            0
+99.96% (18,520,268B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->90.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->90.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->90.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->90.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->90.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.66% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.66% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.66% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->03.74% (692,928B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->03.74% (692,928B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->03.71% (688,184B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->03.71% (688,184B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->03.71% (688,184B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 20            439       18,625,320       18,618,580         6,740            0
+99.96% (18,618,580B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->90.08% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->90.08% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->90.08% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->90.08% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->90.08% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.63% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.63% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.63% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->04.25% (791,240B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->04.25% (791,240B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->04.22% (786,496B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->04.22% (786,496B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->04.22% (786,496B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 21            439       18,723,648       18,716,892         6,756            0
+99.96% (18,716,892B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->89.60% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->89.60% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->89.60% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->89.60% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->89.60% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.60% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.60% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.60% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->04.75% (889,552B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->04.75% (889,552B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->04.73% (884,808B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->04.73% (884,808B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->04.73% (884,808B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 22            439       18,821,976       18,815,204         6,772            0
+99.96% (18,815,204B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->89.14% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->89.14% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->89.14% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->89.14% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->89.14% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.57% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.57% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.57% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->05.25% (987,864B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->05.25% (987,864B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->05.22% (983,120B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->05.22% (983,120B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->05.22% (983,120B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 23            439       18,920,304       18,913,516         6,788            0
+99.96% (18,913,516B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->88.67% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->88.67% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->88.67% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->88.67% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->88.67% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->05.74% (1,086,176B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->05.74% (1,086,176B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->05.72% (1,081,432B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->05.72% (1,081,432B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->05.72% (1,081,432B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.03% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.54% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.54% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.54% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 24            439       19,018,632       19,011,828         6,804            0
+99.96% (19,011,828B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->88.21% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->88.21% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->88.21% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->88.21% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->88.21% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->06.23% (1,184,488B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->06.23% (1,184,488B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->06.20% (1,179,744B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->06.20% (1,179,744B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->06.20% (1,179,744B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.51% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.51% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.51% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 25            439       19,116,960       19,110,140         6,820            0
+99.96% (19,110,140B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->87.76% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->87.76% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->87.76% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->87.76% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->87.76% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->06.71% (1,282,800B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->06.71% (1,282,800B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->06.69% (1,278,056B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->06.69% (1,278,056B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->06.69% (1,278,056B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.49% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.49% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.49% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 26            439       19,215,288       19,208,452         6,836            0
+99.96% (19,208,452B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->87.31% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->87.31% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->87.31% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->87.31% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->87.31% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->07.19% (1,381,112B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->07.19% (1,381,112B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->07.16% (1,376,368B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->07.16% (1,376,368B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->07.16% (1,376,368B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.46% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.46% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.46% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 27            439       19,313,616       19,306,764         6,852            0
+99.96% (19,306,764B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->86.87% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->86.87% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->86.87% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->86.87% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->86.87% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->07.66% (1,479,424B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->07.66% (1,479,424B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->07.64% (1,474,680B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->07.64% (1,474,680B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->07.64% (1,474,680B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.43% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.43% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.43% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 28            439       19,411,944       19,405,076         6,868            0
+99.96% (19,405,076B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->86.43% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->86.43% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->86.43% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->86.43% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->86.43% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->08.13% (1,577,736B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->08.13% (1,577,736B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->08.10% (1,572,992B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->08.10% (1,572,992B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->08.10% (1,572,992B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.40% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.40% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.40% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 29            439       19,510,272       19,503,388         6,884            0
+99.96% (19,503,388B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.99% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.99% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.99% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.99% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.99% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->08.59% (1,676,048B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->08.59% (1,676,048B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->08.57% (1,671,304B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->08.57% (1,671,304B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->08.57% (1,671,304B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.37% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.37% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.37% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 30            439       19,608,600       19,601,700         6,900            0
+99.96% (19,601,700B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,548B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 31            440       19,608,880       19,601,972         6,908            0
+99.96% (19,601,972B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,820B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 32            442       19,609,368       19,602,444         6,924            0
+99.96% (19,602,444B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (2,292B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 33            443       20,657,952       20,651,020         6,932            0
+99.97% (20,651,020B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->81.21% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->81.21% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->81.21% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->81.21% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->81.21% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->13.67% (2,822,936B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->13.67% (2,822,936B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->08.57% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->08.57% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->08.57% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->05.08% (1,048,576B) 0x10D5DF: AlgorithmRun (ftl.c:1216)
+|   | ->05.08% (1,048,576B) 0x10B01B: main (main.c:206)
+|   |   
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.08% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.08% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.08% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (2,292B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 34        673,438       20,662,056       20,655,116         6,940            0
+99.97% (20,655,116B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->81.20% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->81.20% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->81.20% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->81.20% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->81.20% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->13.66% (2,822,936B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->13.66% (2,822,936B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->08.56% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->08.56% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->08.56% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->05.07% (1,048,576B) 0x10D5DF: AlgorithmRun (ftl.c:1216)
+|   | ->05.07% (1,048,576B) 0x10B01B: main (main.c:206)
+|   |   
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.07% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.07% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.07% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.03% (6,388B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 35        697,431       20,662,056       20,655,116         6,940            0
+99.97% (20,655,116B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->81.20% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->81.20% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->81.20% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->81.20% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->81.20% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->13.66% (2,822,936B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->13.66% (2,822,936B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->08.56% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->08.56% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->08.56% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->05.07% (1,048,576B) 0x10D5DF: AlgorithmRun (ftl.c:1216)
+|   | ->05.07% (1,048,576B) 0x10B01B: main (main.c:206)
+|   |   
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.07% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.07% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.07% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.03% (6,388B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 36        697,431       19,613,472       19,606,540         6,932            0
+99.96% (19,606,540B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.54% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.54% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.54% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.54% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.54% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.03% (6,388B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 37        697,432       19,609,368       19,602,444         6,924            0
+99.96% (19,602,444B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (2,292B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 38        697,432       19,608,880       19,601,972         6,908            0
+99.96% (19,601,972B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,820B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 39        697,432       19,608,392       19,601,500         6,892            0
+99.96% (19,601,500B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,348B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 40        697,433       19,608,880       19,601,972         6,908            0
+99.96% (19,601,972B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,820B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 41        697,433       19,609,368       19,602,444         6,924            0
+99.96% (19,602,444B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (2,292B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 42        697,433       19,613,472       19,606,540         6,932            0
+99.96% (19,606,540B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.54% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.54% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.54% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.54% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.54% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.03% (6,388B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 43        697,566       19,617,576       19,610,636         6,940            0
+99.96% (19,610,636B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.05% (10,484B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 44        697,696       19,618,064       19,611,108         6,956            0
+99.96% (19,611,108B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.06% (10,956B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 45        697,696       19,618,552       19,611,580         6,972            0
+99.96% (19,611,580B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.06% (11,428B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 46        697,696       19,622,656       19,615,676         6,980            0
+99.96% (19,615,676B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.50% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.50% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.50% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.50% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.50% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.08% (15,524B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 47        697,696       19,626,760       19,619,772         6,988            0
+99.96% (19,619,772B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.48% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.48% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.48% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.48% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.48% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.10% (19,620B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 48        698,244       19,622,656       19,615,676         6,980            0
+99.96% (19,615,676B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.50% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.50% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.50% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.50% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.50% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.08% (15,524B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 49        698,244       19,622,168       19,615,204         6,964            0
+99.96% (19,615,204B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.50% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.50% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.50% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.50% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.50% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.08% (15,052B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 50        698,244       19,618,064       19,611,108         6,956            0
+99.96% (19,611,108B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.06% (10,956B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 51        698,244       19,617,576       19,610,636         6,940            0
+99.96% (19,610,636B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.05% (10,484B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 52        698,245       19,618,064       19,611,108         6,956            0
+99.96% (19,611,108B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.06% (10,956B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 53        698,245       19,622,168       19,615,204         6,964            0
+99.96% (19,615,204B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.50% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.50% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.50% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.50% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.50% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.08% (15,052B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 54        698,245       19,618,064       19,611,108         6,956            0
+99.96% (19,611,108B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.34% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.34% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.34% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.06% (10,956B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 55        698,245       19,617,576       19,610,636         6,940            0
+99.96% (19,610,636B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.05% (10,484B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 56        698,246       19,617,552       19,610,624         6,928            0
+99.96% (19,610,624B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.05% (10,472B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 57        698,246       19,617,496       19,610,584         6,912            0
+99.96% (19,610,584B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.52% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.52% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.52% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.52% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.52% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.04% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.04% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.05% (10,432B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 58        698,251       19,616,464       19,609,560         6,904            0
+99.96% (19,609,560B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.53% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.53% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.53% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.53% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.53% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.05% (9,408B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 59        698,251       19,612,360       19,605,464         6,896            0
+99.96% (19,605,464B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.54% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.54% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.54% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.54% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.54% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.03% (5,312B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 60        698,251       19,608,256       19,601,368         6,888            0
+99.96% (19,601,368B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.01% (1,216B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n       time(ms)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 61        698,254       19,607,976       19,601,096         6,880            0
+99.96% (19,601,096B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->85.56% (16,777,216B) 0x10B1C0: FTLCalloc (ftl.c:203)
+| ->85.56% (16,777,216B) 0x10B69F: FTLCallocEx (ftl.c:356)
+|   ->85.56% (16,777,216B) 0x10CEA1: FTLInit (ftl.c:972)
+|     ->85.56% (16,777,216B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|       ->85.56% (16,777,216B) 0x10B01B: main (main.c:206)
+|         
+->09.05% (1,774,360B) 0x10B145: FTLMalloc (ftl.c:192)
+| ->09.05% (1,774,360B) 0x10B578: FTLMallocEx (ftl.c:323)
+|   ->09.02% (1,769,616B) 0x10D109: FTLInit (ftl.c:1049)
+|   | ->09.02% (1,769,616B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   |   ->09.02% (1,769,616B) 0x10B01B: main (main.c:206)
+|   |     
+|   ->00.02% (4,744B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.35% (1,048,576B) 0x10CECF: FTLInit (ftl.c:1010)
+| ->05.35% (1,048,576B) 0x10D549: AlgorithmRun (ftl.c:1202)
+|   ->05.35% (1,048,576B) 0x10B01B: main (main.c:206)
+|     
+->00.00% (944B) in 1+ places, all below ms_print's threshold (01.00%)
+

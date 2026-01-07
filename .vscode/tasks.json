@@ -47,6 +47,27 @@
                 "cmake",
                 "make"
             ]
+        },
+        // ========== 新增的任务：一键火焰图 ==========
+        {
+            "label": "🔥 Build & Generate FlameGraph",
+            "type": "shell",
+            "command": "../profile.sh", // 调用刚才写的脚本
+            "windows": {
+                "command": "..\\profile.sh"
+            },
+            "dependsOn": ["build-task"], // 运行前会自动先重新编译
+            "problemMatcher": [],
+            "group": {
+                "kind": "test", // 归类为测试任务
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            }
         }
 	]
 }

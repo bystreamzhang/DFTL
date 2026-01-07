@@ -1,0 +1,35 @@
+total kB           31044    5596    3884
+000055555555e000    1872    1652    1652 rw---   [ anon ]
+00007ffff7db9000    1504    1116       0 r-x-- libc-2.31.so
+00007ffff6492000   25620    1060    1060 rw---   [ anon ]
+00007ffff6390000    1028    1028    1028 rw---   [ anon ]
+00007ffff7f31000     312     188       0 r---- libc-2.31.so
+00007ffff7fd0000     140     140      24 r-x-- ld-2.31.so
+00007ffff7d97000     136     136       0 r---- libc-2.31.so
+00007ffff7f8f000      68      68       0 r-x-- libpthread-2.31.so
+00007ffff7ff3000      32      32       0 r---- ld-2.31.so
+00007ffff7fa0000      24      24       0 r---- libpthread-2.31.so
+00007ffff7f89000      24      24       0 r---- libpthread-2.31.so
+00007ffff7f7f000      16      16      16 r---- libc-2.31.so
+0000555555556000      16      16      16 r-x-- project_hw
+00007ffffffde000     132      12      12 rw---   [ stack ]
+00007ffff7fa8000      24      12      12 rw---   [ anon ]
+00007ffff7f85000      16      12      12 rw---   [ anon ]
+00007ffff7f83000       8       8       8 rw--- libc-2.31.so
+000055555555a000       8       8       8 r---- project_hw
+0000555555554000       8       8       8 r---- project_hw
+00007ffff7ffe000       4       4       4 rw---   [ anon ]
+00007ffff7ffd000       4       4       4 rw--- ld-2.31.so
+00007ffff7ffc000       4       4       4 r---- ld-2.31.so
+00007ffff7fcf000       4       4       0 r---- ld-2.31.so
+00007ffff7fce000       4       4       0 r-x--   [ anon ]
+00007ffff7fa7000       4       4       4 rw--- libpthread-2.31.so
+00007ffff7fa6000       4       4       4 r---- libpthread-2.31.so
+000055555555d000       4       4       4 rw--- project_hw
+000055555555c000       4       4       4 r---- project_hw
+ffffffffff600000       4       0       0 --x--   [ anon ]
+Address           Kbytes     RSS   Dirty Mode  Mapping
+2044369:   /mnt/HDD0/zhangnabaichuan/xinxicunchudasai/build/project_hw -i ../trace.txt -o ../output.txt -v ../read_result.txt
+00007ffff7fcb000      12       0       0 r----   [ anon ]
+00007ffff6491000       4       0       0 -----   [ anon ]
+---------------- ------- ------- ------- 

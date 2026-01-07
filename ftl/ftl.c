@@ -18,10 +18,33 @@
 // 原注释：目前发现，对于本赛题的数据，CMT没什么用，可以直接取消，保留TPC就行
 //#define USE_CMT
 
+// 答辩阶段添加
+//#define TIME_TEST 目前似乎有点问题，用火焰图吧
+//#define NO_PIPELINE // 单线程
+
+#ifdef TIME_TEST
+// 定义计时器结构
+long long total_producer_wait = 0; // 主线程等待队列非满的时间
+long long total_consumer_wait = 0; // Worker线程等待队列非空的时间
+long long total_io_parse = 0;      // 输入解析时间
+long long total_ftl_logic = 0;     // FTL核心逻辑时间
+
+// 计时宏：开始
+#define TIMER_START(ts) clock_gettime(CLOCK_MONOTONIC, &ts)
+
+// 计时宏：结束并累加 (单位：纳秒)
+#define TIMER_END_ADD(ts_start, accumulator) do { \
+    struct timespec ts_now; \
+    clock_gettime(CLOCK_MONOTONIC, &ts_now); \
+    accumulator += (ts_now.tv_sec - ts_start.tv_sec) * 1000000000LL + \
+                   (ts_now.tv_nsec - ts_start.tv_nsec); \
+} while(0)
+#endif
+
 //决赛添加
-//#define DEBUG_FTL // 打印调试信息(主要是预估内存占用)。为了加速，提交时应该注释掉。实际延时影响其实小于0.5%
+#define DEBUG_FTL // 打印调试信息(主要是预估内存占用)。为了加速，提交时应该注释掉。实际延时影响其实小于0.5%
 #define SMALL_GTD_ARRAY
-#define FAST_DESTROY   // 跳过销毁逻辑，
+#define FAST_DESTROY   // 跳过销毁逻辑
 #define FAST_CONSTANTS // 针对决赛的常数优化，可能注释掉一些检查和未实现功能
 //#define FAST_CONSTANTS_PREAD //pread_full更安全可靠，而开启此优化后直接使用pread。优化小于1% (94,92,92 vs 91,93,92)
 #define SETVBUF // 使用更大的输入缓冲区，延时优化约2%~3%
@@ -48,9 +71,7 @@
 #define CHECK_TPC_ENTRY_VALID(e) ((e)->mpn != MPN_SENTINEL)
 
 //#define SMALL_INPUT_MODE
-#ifdef SMALL_INPUT_MODE
-#define SMALL_INPUT_THRESHOLD (30000000ull)
-#endif
+#define SMALL_INPUT_THRESHOLD (30000000000000ull) // 本来打算对小数据做特殊处理的，比如改成单线程，现在取消这个设计
 
 // TPC 配置
 #define TPC_WAYS 4
@@ -60,7 +81,7 @@
 
 // TaskBatch 模型
 #define BATCH_SIZE   4096
-#define QUEUE_DEPTH  16
+#define QUEUE_DEPTH  16 // 至少要大于1以实现流水线，如果为1，就退化到单线程！
 
 typedef struct {
     uint32_t type;
@@ -875,7 +896,7 @@ static void PrintResourceReport(const char *title, FTL *d)
     uint64_t total = g_memstats.total_used;
     fprintf(stdout, "Heap Memory (current / peak): %" PRIu64 " B (%.6f GB) / %" PRIu64 " B (%.6f GB)\n",
             total, to_gb(total), g_memstats.peak_used, to_gb(g_memstats.peak_used));
-    fprintf(stdout, "  - Control structures:   %" PRIu64 " B (%.6f GB)\n",
+    fprintf(stdout, "  - Control structures and setvbuf(1MB):   %" PRIu64 " B (%.6f GB)\n",
             g_memstats.ctrl_used, to_gb(g_memstats.ctrl_used));
     fprintf(stdout, "  - CMT entries:      %" PRIu64 " B (%.6f GB)\n",
             g_memstats.cmt_entrys_used, to_gb(g_memstats.cmt_entrys_used));
@@ -922,6 +943,11 @@ static void PrintResourceReport(const char *title, FTL *d)
             g_ssdstats.map_max_off, to_gb(g_ssdstats.map_max_off));
 #else
     fprintf(stdout, "Resource report is disabled. Compile with DEBUG_FTL to enable it.\n");
+#endif
+#ifdef TIME_TEST
+    fprintf(stdout, "\nTime Statistics:\n");
+    fprintf(stdout, "  - total_io_parse time:    %.6f seconds\n", total_io_parse);
+    fprintf(stdout, "  - total_consumer_wait time:   %.6f seconds\n", total_consumer_wait);
 #endif
     fprintf(stdout, "=====================================================\n");
 }
@@ -1014,6 +1040,7 @@ void FTLInit(uint64_t len)
     g->last_entry = NULL;
 #endif
 
+    #ifndef NO_PIPELINE
     memset(&g_pl, 0, sizeof(g_pl));
 
     // 初始化队列与 batch pool
@@ -1028,6 +1055,7 @@ void FTLInit(uint64_t len)
     pthread_mutex_init(&g_pl.mutex, NULL);
     pthread_cond_init(&g_pl.not_empty, NULL);
     pthread_cond_init(&g_pl.not_full, NULL);
+    #endif
 
     // 可选优化：提示内核随机访问
 #if defined(POSIX_FADV_RANDOM)
@@ -1112,10 +1140,16 @@ static void *WorkerThread(void *arg) {
     TaskBatch *batch;
     while (1) {
         pthread_mutex_lock(&g_pl.mutex);
+        #ifdef TIME_TEST
+        struct timespec t_start;
+        TIMER_START(t_start);
+        #endif
         while (g_pl.head == g_pl.tail && !g_pl.finished) {
             pthread_cond_wait(&g_pl.not_empty, &g_pl.mutex);
         }
-
+        #ifdef TIME_TEST
+        TIMER_END_ADD(t_start, total_consumer_wait);
+        #endif
         if (g_pl.head == g_pl.tail && g_pl.finished) {
             pthread_mutex_unlock(&g_pl.mutex);
             break;
@@ -1169,8 +1203,10 @@ uint32_t AlgorithmRun(IOVector *ioVector, const char *outputFile) {
     FTLInit(ioVector->len);
     g_pl.output_file = output;
 
+    #ifndef NO_PIPELINE
     // 启动单 worker 线程（FTLRead/FTLModify 在其中执行）
     pthread_create(&g_pl.worker_tid, NULL, WorkerThread, NULL);
+    #endif
 
     FILE *input = fopen(ioVector->inputFile, "r");
     if (!input) {
@@ -1180,7 +1216,7 @@ uint32_t AlgorithmRun(IOVector *ioVector, const char *outputFile) {
     }
 #ifdef SETVBUF
     // [新增] 设置 1MB 的输入缓冲区
-    char *input_buffer = malloc(1024 * 1024);
+    char *input_buffer = (char *)FTL_MALLOC_CTRL(1024 * 1024);
     if (input_buffer) {
         setvbuf(input, input_buffer, _IOFBF, 1024 * 1024);
     }
@@ -1191,7 +1227,7 @@ uint32_t AlgorithmRun(IOVector *ioVector, const char *outputFile) {
 
     // 判断是否使用多线程流水线：
     // 这里简单策略：len 大于 SMALL_INPUT_THRESHOLD 就用多线程，否则用原单线程逻辑
-#ifdef SMALL_INPUT_MODE
+#if defined SMALL_INPUT_MODE || defined NO_PIPELINE
     if (ioVector->len <= SMALL_INPUT_THRESHOLD) {
         // ======= 原单线程逻辑保留 =======
         for (uint64_t i = 0; i < ioVector->len; ++i) {
@@ -1222,8 +1258,15 @@ uint32_t AlgorithmRun(IOVector *ioVector, const char *outputFile) {
         current_batch->count = 0;
 
         for (uint64_t i = 0; i < ioVector->len; ++i) {
+            #ifdef TIME_TEST
+            struct timespec t_start;
+            TIMER_START(t_start);
+            #endif
             fgets(line, sizeof(line), input);
             sscanf(line, "%u %llu %llu", &ioVector->ioUnit.type, &ioVector->ioUnit.lba, &ioVector->ioUnit.ppn);
+            #ifdef TIME_TEST
+            TIMER_END_ADD(t_start, total_io_parse);
+            #endif
             TaskSimple t = {ioVector->ioUnit.type, ioVector->ioUnit.lba, ioVector->ioUnit.ppn};
             current_batch->tasks[current_batch->count++] = t;
 
@@ -1269,7 +1312,7 @@ uint32_t AlgorithmRun(IOVector *ioVector, const char *outputFile) {
         pthread_mutex_destroy(&g_pl.mutex);
         pthread_cond_destroy(&g_pl.not_empty);
         pthread_cond_destroy(&g_pl.not_full);
-#ifdef SMALL_INPUT_MODE
+#if defined SMALL_INPUT_MODE || defined NO_PIPELINE
     }
 #endif
 
