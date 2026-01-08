@@ -16,7 +16,7 @@
 #include <sys/sysinfo.h>
 
 // 原注释：目前发现，对于本赛题的数据，CMT没什么用，可以直接取消，保留TPC就行
-//#define USE_CMT
+#define USE_CMT
 
 // 答辩阶段添加
 //#define TIME_TEST 目前似乎有点问题，用火焰图吧
@@ -124,9 +124,9 @@ enum {
     DIRTY = 1
 } DIRTY_STATE;
 
-// 原 TPC 参数（未使用的部分保留）
-#define MCACHE_PAGES (1u << 10)
-#define CMT_HASH_SIZE (1u << 12)
+// 原 CMT TPC 参数（未使用的部分保留）
+#define MCACHE_PAGES (1u << 25)
+#define CMT_HASH_SIZE (1u << 27)
 // #define TPC_MAX_PAGES    (1u << 8)
 // #define TPC_HASH_SIZE    (1u << 12)
 
