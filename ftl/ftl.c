@@ -16,11 +16,15 @@
 #include <sys/sysinfo.h>
 
 // 原注释：目前发现，对于本赛题的数据，CMT没什么用，可以直接取消，保留TPC就行
-#define USE_CMT
+//#define USE_CMT
+#ifdef USE_CMT
+#define LARGE_CMT
+#endif
 
 // 答辩阶段添加
 //#define TIME_TEST 目前似乎有点问题，用火焰图吧
 //#define NO_PIPELINE // 单线程
+//#define DISABLE_TPC
 
 #ifdef TIME_TEST
 // 定义计时器结构
@@ -125,8 +129,13 @@ enum {
 } DIRTY_STATE;
 
 // 原 CMT TPC 参数（未使用的部分保留）
-#define MCACHE_PAGES (1u << 25)
-#define CMT_HASH_SIZE (1u << 27)
+#ifdef LARGE_CMT
+#define MCACHE_PAGES (1u << 20)
+#define CMT_HASH_SIZE (1u << 22)
+#else
+#define MCACHE_PAGES (1u << 10)
+#define CMT_HASH_SIZE (1u << 12)
+#endif
 // #define TPC_MAX_PAGES    (1u << 8)
 // #define TPC_HASH_SIZE    (1u << 12)
 
@@ -617,6 +626,13 @@ static inline uint32_t tpc_get_set_idx(uint64_t mpn) {
 
 static inline void tpc_flush_entry(FTL *d, TpcEntry *e) {
     if (CHECK_TPC_ENTRY_VALID(e) && e->dirty) {
+        // 【新增补丁】: 在写盘前，再次确认/强制标记 GTD！
+        // 防止之前 gtd_mark_allocated 没生效，或者位图意外丢失
+#ifdef SMALL_GTD_ARRAY
+        if (!gtd_is_allocated(d, e->mpn)) {
+            gtd_mark_allocated(d, e->mpn);
+        }
+#endif
         off_t offset = (off_t)(e->mpn) * MAP_PAGE_BYTES;
 #ifndef CACHE_LINE_OPTIMIZE
         if (SSD_PWRITE_MAP(d->fd_map, e->buffer, MAP_PAGE_BYTES, offset) != (ssize_t)MAP_PAGE_BYTES) {
@@ -742,6 +758,32 @@ static uint64_t read_ppn_from_map_with_gtd(FTL *d, uint64_t lpn)
     // 原实现：使用 tpc_page 结构及 LRU；现改为使用 tpc_get_buffer
     uint64_t mpn = lpn_to_mpn(lpn);
     uint32_t off = lpn_to_off(lpn);
+#ifdef DISABLE_TPC
+    // === 无 TPC 模式：直接读盘 ===
+    
+    // 1. 检查 GTD 是否已分配
+#ifdef SMALL_GTD_ARRAY
+    if (!gtd_is_allocated(d, mpn)) return UNMAPPED_PPA;
+#else
+    if (d->gtd[mpn] == INVALID_PPA) return UNMAPPED_PPA;
+#endif
+
+    // 2. 准备临时 buffer (4KB)
+    uint8_t buf[MAP_PAGE_BYTES]; // 栈上分配，速度快
+
+    // 3. 计算偏移并读取 (注意强制转 uint64 防止溢出)
+    off_t offset = (off_t)((uint64_t)mpn * MAP_PAGE_BYTES);
+    
+    // 4. 直接读取 Flash
+    if (pread_full(d->fd_map, buf, MAP_PAGE_BYTES, offset) < 0) {
+        return UNMAPPED_PPA; // 读取失败视为未映射
+    }
+
+    // 5. 提取数据
+    uint64_t v = entry_load_u64(buf, off);
+    if (v == 0) return UNMAPPED_PPA;
+    return v;
+#else
     uint8_t *buf = tpc_get_buffer(d, mpn, 0);
 #ifdef FAST_CONSTANTS
     return ((const uint64_t *)buf)[off];
@@ -749,6 +791,7 @@ static uint64_t read_ppn_from_map_with_gtd(FTL *d, uint64_t lpn)
     uint64_t v = entry_load_u64(buf, off);
     if (v == 0) return UNMAPPED_PPA;
     return v;
+#endif
 #endif
 }
 
@@ -758,8 +801,52 @@ static void write_ppn_to_map_with_gtd(FTL *d, uint64_t lpn, uint64_t ppn)
     // 原实现：获取 tpc_page，可能懒分配 buf；现在统一使用 tpc_get_buffer
     uint64_t mpn = lpn_to_mpn(lpn);
     uint32_t off = lpn_to_off(lpn);
+#ifdef DISABLE_TPC
+    // === 无 TPC 模式：读-改-写 ===
+    uint8_t buf[MAP_PAGE_BYTES];
+    off_t offset = (off_t)((uint64_t)mpn * MAP_PAGE_BYTES);
+    bool need_read = false;
+
+    // 1. 检查并标记 GTD
+#ifdef SMALL_GTD_ARRAY
+    if (gtd_is_allocated(d, mpn)) {
+        need_read = true;
+    } else {
+        gtd_mark_allocated(d, mpn);
+        need_read = false; // 新页，全0，不用读
+    }
+#else
+    if (d->gtd[mpn] != INVALID_PPA) {
+        need_read = true;
+    } else {
+        d->gtd[mpn] = mpn_to_ppa(mpn);
+        need_read = false;
+    }
+#endif
+
+    // 2. 如果是旧页，先读进来；如果是新页，清零
+    if (need_read) {
+        if (pread_full(d->fd_map, buf, MAP_PAGE_BYTES, offset) < 0) {
+            memset(buf, 0, MAP_PAGE_BYTES); // 读取失败当做新页处理
+        }
+    } else {
+        memset(buf, 0, MAP_PAGE_BYTES);
+    }
+
+    // 3. 修改数据
+    entry_store_u64(buf, off, ppn);
+
+    // 4. 直接写回 Flash
+    // 注意：使用 pwrite_full_with_stats 以便计入写入量统计
+    if (pwrite_full_with_stats(d->fd_map, buf, MAP_PAGE_BYTES, offset) < 0) {
+        perror("No-TPC write failed");
+        exit(1);
+    }
+
+#else
     uint8_t *buf = tpc_get_buffer(d, mpn, 1);
     entry_store_u64(buf, off, ppn);
+#endif
 }
 
 // 以下 CMT hash 仍保留（如后续开启 USE_CMT 时可用）
@@ -998,6 +1085,7 @@ void FTLInit(uint64_t len)
     cachehash_init(&g->cmt_hash, CMT_HASH_SIZE);
 #endif
 
+#ifndef DISABLE_TPC
     // 原 tpc_init(g->tpc, TPC_MAX_PAGES); 已不用
     // --- 新增：TPC 预分配 page_pool_base 并绑定到每个 TpcEntry ---
 #ifndef ZERO_COPY_DMA
@@ -1031,6 +1119,7 @@ void FTLInit(uint64_t len)
 #endif
         }
     }
+#endif
 
     g->fd_map = open_file("map.ssd", true);
     if (unlikely(g->fd_map < 0)) { perror("open map.ssd failed"); exit(1); }

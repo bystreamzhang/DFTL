@@ -64,3 +64,8 @@ valgrind --tool=massif --time-unit=ms --detailed-freq=1 \
 分析Max RSS使用 /usr/bin/time -v ./build/project_hw ...
 
 更具体的可以用pmap：`pmap -x <pid> | sort -k 3 -n -r`
+
+## 系统调用分析（setvbuf）
+
+`strace -c ./project_hw_final -i ../trace.txt -o ../output.txt -v ../read_result.txt`
+`strace -c ./project_hw_nosetvbuf -i ../trace.txt -o ../output.txt -v ../read_result.txt`
